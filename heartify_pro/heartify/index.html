@@ -1,0 +1,2233 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Heartify Pro | Clinical Heart Analysis</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet"/>
+<style>
+/* ═══════════════════════════
+   DESIGN TOKENS
+═══════════════════════════ */
+:root {
+  --bg:          #d8e8f7;
+  --card:        #ffffff;
+  --purple:      #4f35c8;
+  --purple-light:#ede9ff;
+  --purple-mid:  #7b5ef8;
+  --blue-accent: #4f8ef8;
+  --text-dark:   #141830;
+  --text-mid:    #5a6380;
+  --text-muted:  #9aa3bf;
+  --border:      #e8ecf8;
+  --active-card: #edeaff;
+  --active-border:#c5b8f8;
+  --green:       #22c55e;
+  --orange:      #f59e0b;
+  --red:         #ef4444;
+  --shadow-sm:   0 2px 10px rgba(79,53,200,.08), 0 1px 3px rgba(0,0,0,.04);
+  --shadow-md:   0 8px 28px rgba(79,53,200,.12), 0 2px 8px rgba(0,0,0,.06);
+  --shadow-lg:   0 16px 44px rgba(79,53,200,.18), 0 4px 14px rgba(0,0,0,.08);
+  --radius:      22px;
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  background: var(--bg);
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 28px 20px 48px;
+}
+
+/* ═══════════════════════════
+   SHELL + SIDEBAR
+═══════════════════════════ */
+.shell {
+  display: flex;
+  width: 100%;
+  max-width: 1200px;
+  animation: shellIn .5s cubic-bezier(.22,1,.36,1) both;
+}
+@keyframes shellIn { from{opacity:0;transform:translateY(16px)} to{opacity:1;transform:translateY(0)} }
+
+.sidebar {
+  width: 76px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 24px 0;
+  gap: 2px;
+  flex-shrink: 0;
+}
+
+.logo-badge {
+  width: 44px; height: 44px;
+  background: linear-gradient(140deg,#7b5ef8,#4f35c8);
+  border-radius: 14px;
+  display: flex; align-items: center; justify-content: center;
+  color: #fff; font-family: 'DM Serif Display',serif; font-size: 16px;
+  margin-bottom: 18px;
+  box-shadow: 0 4px 16px rgba(79,53,200,.38);
+  cursor: pointer;
+  transition: transform .2s, box-shadow .2s;
+}
+.logo-badge:hover { transform:scale(1.07); box-shadow:0 7px 22px rgba(79,53,200,.48); }
+
+.nav-group { display:flex; flex-direction:column; align-items:center; gap:2px; width:100%; flex:1; }
+.nav-divider { width:26px; height:1px; background:var(--border); margin:6px 0; }
+.nav-bottom-group { display:flex; flex-direction:column; align-items:center; gap:2px; margin-top:auto; }
+
+.nav-item {
+  width:48px; height:48px; border-radius:14px;
+  display:flex; align-items:center; justify-content:center;
+  cursor:pointer; color:var(--text-muted);
+  transition: background .18s, color .18s, transform .15s;
+  position:relative;
+}
+.nav-item:hover { background:rgba(255,255,255,.72); color:var(--purple); transform:translateX(2px); }
+.nav-item.active { background:var(--purple-light); color:var(--purple); box-shadow:0 3px 12px rgba(79,53,200,.2); }
+.nav-item.active::before {
+  content:''; position:absolute; left:-8px;
+  width:4px; height:22px; background:var(--purple);
+  border-radius:0 4px 4px 0;
+}
+.nav-item[data-tip]:hover::after {
+  content:attr(data-tip);
+  position:absolute; left:58px;
+  background:var(--text-dark); color:#fff;
+  font-size:11px; font-weight:700;
+  padding:4px 10px; border-radius:8px;
+  white-space:nowrap; pointer-events:none; z-index:100;
+  animation:tipIn .12s ease both;
+}
+@keyframes tipIn { from{opacity:0;transform:translateX(-4px)} to{opacity:1;transform:translateX(0)} }
+
+/* ═══════════════════════════
+   MAIN AREA
+═══════════════════════════ */
+.main { flex:1; display:flex; flex-direction:column; gap:14px; padding:0 14px 0 6px; }
+.page { display:none; flex-direction:column; gap:14px; animation:pageIn .35s cubic-bezier(.22,1,.36,1) both; }
+.page.active { display:flex; }
+@keyframes pageIn { from{opacity:0;transform:translateY(10px)} to{opacity:1;transform:translateY(0)} }
+
+.topbar { display:flex; align-items:center; justify-content:space-between; padding:4px 0; }
+.page-heading { font-family:'DM Serif Display',serif; font-size:30px; color:var(--text-dark); line-height:1; }
+.page-heading .muted { color:#aab8d4; font-style:italic; }
+
+.admin-pill {
+  display:flex; align-items:center; gap:10px;
+  background:var(--card); border-radius:999px;
+  padding:6px 18px 6px 6px;
+  box-shadow:var(--shadow-sm); cursor:pointer;
+  transition:box-shadow .2s;
+}
+.admin-pill:hover { box-shadow:var(--shadow-md); }
+.admin-avatar {
+  width:34px; height:34px; border-radius:50%;
+  background:linear-gradient(135deg,#b8d0f8,#8ab4f0);
+  display:flex; align-items:center; justify-content:center; flex-shrink:0;
+}
+.admin-label { font-size:11px; font-weight:800; color:var(--text-dark); letter-spacing:.7px; text-transform:uppercase; }
+
+/* Card */
+.card {
+  background:var(--card); border-radius:var(--radius);
+  box-shadow:var(--shadow-sm);
+  transition:box-shadow .25s;
+}
+.card:hover { box-shadow:var(--shadow-md); }
+
+/* ═══════════════════════════
+   PAGE: HOME / LOGIN
+═══════════════════════════ */
+.login-wrap { display:flex; align-items:center; justify-content:center; min-height:78vh; gap:60px; }
+.login-left { flex:1; max-width:420px; }
+.login-left h1 { font-family:'DM Serif Display',serif; font-size:42px; color:var(--text-dark); line-height:1.15; margin-bottom:12px; }
+.login-left h1 em { color:var(--purple); font-style:italic; }
+.login-left p { font-size:14px; color:var(--text-muted); line-height:1.7; margin-bottom:32px; max-width:340px; }
+
+.login-features { display:flex; flex-direction:column; gap:12px; }
+.login-feature { display:flex; align-items:center; gap:12px; background:var(--card); border-radius:14px; padding:12px 16px; box-shadow:var(--shadow-sm); }
+.login-feature-icon { width:36px; height:36px; border-radius:10px; background:var(--purple-light); display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+.login-feature-text { font-size:13px; font-weight:700; color:var(--text-dark); }
+.login-feature-sub  { font-size:11px; color:var(--text-muted); font-weight:500; }
+
+.login-right { width:360px; flex-shrink:0; }
+.login-card { padding:36px 32px; }
+.login-card h2 { font-family:'DM Serif Display',serif; font-size:26px; color:var(--text-dark); margin-bottom:6px; }
+.login-card p  { font-size:13px; color:var(--text-muted); margin-bottom:28px; }
+
+.form-group { margin-bottom:16px; }
+.form-label { font-size:12px; font-weight:700; color:var(--text-mid); letter-spacing:.4px; margin-bottom:6px; display:block; }
+.form-input { width:100%; padding:12px 14px; border:2px solid var(--border); border-radius:12px; font-size:14px; font-family:'Plus Jakarta Sans',sans-serif; color:var(--text-dark); background:#fafbff; outline:none; transition:border-color .18s, box-shadow .18s; }
+.form-input:focus { border-color:var(--purple); box-shadow:0 0 0 3px rgba(79,53,200,.12); }
+
+.btn-login { width:100%; padding:13px; background:linear-gradient(135deg,#5b3de8,#4f35c8); color:#fff; border:none; border-radius:13px; font-size:14px; font-weight:800; font-family:'Plus Jakarta Sans',sans-serif; cursor:pointer; box-shadow:0 6px 20px rgba(79,53,200,.38); transition:transform .18s, box-shadow .18s; margin-top:8px; }
+.btn-login:hover { transform:translateY(-2px); box-shadow:0 10px 28px rgba(79,53,200,.48); }
+
+.login-divider { display:flex; align-items:center; gap:10px; margin:18px 0; }
+.login-divider::before,.login-divider::after { content:''; flex:1; height:1px; background:var(--border); }
+.login-divider span { font-size:11px; color:var(--text-muted); font-weight:600; }
+
+.btn-guest { width:100%; padding:12px; background:var(--purple-light); color:var(--purple); border:2px solid var(--active-border); border-radius:13px; font-size:13px; font-weight:800; font-family:'Plus Jakarta Sans',sans-serif; cursor:pointer; transition:background .18s; }
+.btn-guest:hover { background:#e0d8ff; }
+
+/* ═══════════════════════════
+   PAGE: OVERVIEW
+═══════════════════════════ */
+.card-neural { display:flex; align-items:center; justify-content:space-between; gap:20px; padding:34px 38px; min-height:210px; position:relative; overflow:hidden; }
+.card-neural::after { content:''; position:absolute; right:-30px; top:-40px; width:240px; height:240px; background:radial-gradient(circle,rgba(123,94,248,.07) 0%,transparent 70%); border-radius:50%; pointer-events:none; }
+
+.neural-text h2 { font-family:'DM Serif Display',serif; font-size:30px; color:var(--text-dark); line-height:1.18; margin-bottom:10px; }
+.neural-text p  { font-size:13px; color:var(--text-muted); margin-bottom:22px; max-width:250px; line-height:1.6; }
+
+.btn-upload { background:linear-gradient(135deg,#5b3de8,#4f35c8); color:#fff; border:none; border-radius:13px; padding:13px 26px; font-size:14px; font-weight:800; font-family:'Plus Jakarta Sans',sans-serif; cursor:pointer; box-shadow:0 6px 20px rgba(79,53,200,.38); transition:transform .18s, box-shadow .18s; }
+.btn-upload:hover { transform:translateY(-2px); box-shadow:0 10px 30px rgba(79,53,200,.48); }
+
+.heart-wrap { width:158px; height:158px; flex-shrink:0; display:flex; align-items:center; justify-content:center; }
+.heart-wrap svg { animation:heartbeat 1.6s ease-in-out infinite; filter:drop-shadow(0 8px 18px rgba(232,64,64,.28)); }
+@keyframes heartbeat { 0%,100%{transform:scale(1)} 14%{transform:scale(1.09)} 28%{transform:scale(1)} 42%{transform:scale(1.05)} 56%{transform:scale(1)} }
+
+.upload-overlay { display:none; flex-direction:column; align-items:center; justify-content:center; gap:14px; }
+.upload-overlay.show { display:flex; }
+.analyzing-spinner { width:48px; height:48px; border:4px solid var(--purple-light); border-top-color:var(--purple); border-radius:50%; animation:spin .8s linear infinite; }
+@keyframes spin { to{transform:rotate(360deg)} }
+
+.card-body { padding:26px 28px; }
+.section-title { display:flex; align-items:center; gap:8px; font-size:15px; font-weight:800; color:var(--text-dark); margin-bottom:18px; }
+.dot { width:9px; height:9px; border-radius:50%; background:var(--text-dark); flex-shrink:0; }
+.body-organs { display:flex; gap:12px; }
+.organ-card { flex:1; border-radius:18px; padding:18px 14px 16px; background:#f7f9fe; border:2px solid transparent; display:flex; flex-direction:column; align-items:center; gap:10px; cursor:pointer; transition:border-color .2s,background .2s,transform .2s,box-shadow .2s; }
+.organ-card:hover { transform:translateY(-3px); box-shadow:var(--shadow-sm); }
+.organ-card.active { background:var(--active-card); border-color:var(--active-border); box-shadow:0 4px 20px rgba(79,53,200,.14); }
+.organ-icon { width:52px; height:52px; display:flex; align-items:center; justify-content:center; }
+.organ-name { font-size:10px; font-weight:800; color:var(--text-muted); letter-spacing:1.2px; text-transform:uppercase; }
+.organ-stats { font-size:12px; color:var(--text-mid); line-height:1.8; width:100%; }
+.stat-row { display:flex; justify-content:space-between; gap:4px; }
+.stat-row .val { font-weight:800; color:var(--text-dark); }
+
+.right-panel { width:296px; flex-shrink:0; display:flex; flex-direction:column; gap:14px; }
+.card-stats { padding:22px 20px; }
+.stats-title { font-size:14px; font-weight:800; color:var(--text-dark); margin-bottom:14px; }
+
+.bpm-ecg-row { display:flex; align-items:center; justify-content:space-between; margin-bottom:12px; }
+.bpm-label { font-size:11px; color:var(--text-muted); font-weight:700; margin-bottom:3px; }
+.bpm-value { font-size:26px; font-weight:800; color:var(--text-dark); }
+
+.ecg-container { display:flex; flex-direction:column; align-items:flex-end; gap:4px; }
+.ecg-label { font-size:9px; font-weight:800; color:var(--purple); letter-spacing:1px; }
+.ecg-wrap { width:120px; height:36px; overflow:hidden; border-radius:8px; background:#f7f9fe; }
+.ecg-svg { width:200%; animation:ecgScroll 3s linear infinite; }
+@keyframes ecgScroll { from{transform:translateX(0)} to{transform:translateX(-50%)} }
+
+.progress-bg { height:6px; background:#edf0fa; border-radius:99px; margin-bottom:16px; overflow:hidden; }
+.progress-fill { height:100%; width:72%; background:linear-gradient(90deg,var(--purple),var(--purple-mid)); border-radius:99px; }
+
+.mini-stats-row { display:flex; gap:10px; }
+.mini-stat { flex:1; background:#f7f9fe; border-radius:14px; padding:12px; }
+.mini-stat-header { display:flex; align-items:center; gap:5px; font-size:10px; font-weight:700; color:var(--text-muted); margin-bottom:6px; }
+.mini-stat-val { font-size:13px; font-weight:800; color:var(--text-dark); margin-bottom:8px; }
+.mini-wave { width:100%; height:22px; display:block; }
+.mini-num-row { display:flex; gap:6px; margin-top:6px; }
+.mini-num-box { background:var(--card); border-radius:8px; padding:5px 8px; text-align:center; }
+.mini-num { font-size:13px; font-weight:800; color:var(--purple); }
+.mini-sub { font-size:9px; color:var(--text-muted); font-weight:700; }
+
+.card-schedule { padding:20px 20px 14px; }
+.schedule-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:14px; }
+.show-more { font-size:11px; font-weight:800; color:var(--purple); cursor:pointer; }
+.cal-grid { display:grid; grid-template-columns:repeat(7,1fr); gap:4px; margin-bottom:14px; }
+.cal-cell { display:flex; flex-direction:column; align-items:center; gap:3px; }
+.cal-day { font-size:8.5px; font-weight:700; color:var(--text-muted); }
+.cal-num { width:26px; height:26px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:11px; font-weight:700; color:var(--text-mid); }
+.cal-num.today { background:var(--purple-light); color:var(--purple); }
+.cal-num.marked { background:var(--purple); color:#fff; }
+
+.appt-list { display:flex; flex-direction:column; gap:8px; }
+.appt-row { display:flex; align-items:center; gap:12px; padding:10px 12px; background:#f7f9fe; border-radius:12px; }
+.appt-icon { width:36px; height:36px; border-radius:10px; background:#fee2e2; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+.appt-info { flex:1; }
+.appt-title { font-size:12px; font-weight:800; color:var(--text-dark); }
+.appt-doctor { font-size:11px; color:var(--text-muted); }
+.appt-arrow { font-size:16px; color:var(--text-muted); }
+
+/* ═══════════════════════════
+   PAGE: ANALYSIS / UPLOAD
+═══════════════════════════ */
+.analysis-grid { display:grid; grid-template-columns:1fr 1fr; gap:14px; }
+.upload-zone {
+  border:2.5px dashed var(--active-border);
+  border-radius:20px; padding:40px 24px;
+  display:flex; flex-direction:column; align-items:center; justify-content:center; gap:14px;
+  cursor:pointer; transition:border-color .2s, background .2s;
+  background:linear-gradient(135deg,rgba(79,53,200,.03),rgba(123,94,248,.06));
+  text-align:center; min-height:220px;
+}
+.upload-zone:hover,.upload-zone.drag { border-color:var(--purple); background:var(--purple-light); }
+.upload-zone-icon { width:60px; height:60px; background:var(--purple-light); border-radius:18px; display:flex; align-items:center; justify-content:center; }
+.upload-zone h3 { font-size:15px; font-weight:800; color:var(--text-dark); }
+.upload-zone p  { font-size:12px; color:var(--text-muted); }
+
+.result-card { padding:28px; display:flex; flex-direction:column; gap:16px; }
+.result-label { font-size:11px; font-weight:800; color:var(--text-muted); letter-spacing:.8px; text-transform:uppercase; }
+.result-condition { font-family:'DM Serif Display',serif; font-size:28px; color:var(--text-dark); }
+.result-badge { display:inline-flex; align-items:center; gap:6px; padding:5px 14px; border-radius:99px; font-size:12px; font-weight:800; }
+.conf-bar-wrap { margin-top:4px; }
+.conf-bar-label { display:flex; justify-content:space-between; font-size:11px; font-weight:700; color:var(--text-muted); margin-bottom:6px; }
+.conf-bar-bg { height:8px; background:#edf0fa; border-radius:99px; overflow:hidden; }
+.conf-bar-fill { height:100%; border-radius:99px; transition:width 1s cubic-bezier(.22,1,.36,1); }
+.breakdown-grid { display:flex; flex-direction:column; gap:6px; }
+.breakdown-row { display:flex; align-items:center; gap:10px; font-size:12px; }
+.breakdown-name { width:80px; font-weight:700; color:var(--text-mid); }
+.breakdown-bar-bg { flex:1; height:6px; background:#edf0fa; border-radius:99px; overflow:hidden; }
+.breakdown-bar-fill { height:100%; border-radius:99px; background:var(--purple-light); transition:width .8s ease; }
+.breakdown-bar-fill.top { background:linear-gradient(90deg,var(--purple),var(--purple-mid)); }
+.breakdown-pct { width:36px; text-align:right; font-weight:800; color:var(--text-dark); }
+
+.explanation-card { padding:24px 28px; }
+.explanation-card h3 { font-size:14px; font-weight:800; color:var(--text-dark); margin-bottom:10px; display:flex; align-items:center; gap:8px; }
+.explanation-text { font-size:13px; color:var(--text-mid); line-height:1.75; }
+.explanation-skeleton { display:flex; flex-direction:column; gap:8px; }
+.skel-line { height:12px; background:linear-gradient(90deg,#edf0fa 25%,#e0e8f5 50%,#edf0fa 75%); background-size:200% 100%; border-radius:6px; animation:shimmer 1.4s infinite; }
+@keyframes shimmer { to{background-position:-200% 0} }
+
+.empty-result { display:flex; flex-direction:column; align-items:center; justify-content:center; gap:12px; padding:20px; text-align:center; flex:1; min-height:180px; }
+.empty-result p { font-size:13px; color:var(--text-muted); }
+
+/* ═══════════════════════════
+   PAGE: HEALTH TRENDS
+═══════════════════════════ */
+.trends-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:14px; }
+.trend-card { padding:22px 24px; }
+.trend-card h3 { font-size:14px; font-weight:800; color:var(--text-dark); margin-bottom:4px; }
+.trend-card .sub { font-size:11px; color:var(--text-muted); margin-bottom:14px; }
+.chart-area { height:130px; }
+.chart-area svg { width:100%; height:100%; }
+.trend-foot { display:flex; justify-content:space-between; align-items:center; margin-top:12px; }
+.trend-val { font-size:22px; font-weight:800; color:var(--text-dark); }
+.trend-change { font-size:11px; font-weight:800; padding:3px 10px; border-radius:99px; }
+.trend-change.up   { background:#dcfce7; color:#16a34a; }
+.trend-change.down { background:#fee2e2; color:#dc2626; }
+.trend-change.flat { background:#f3f4f6; color:#6b7280; }
+
+/* ═══════════════════════════
+   PAGE: DR. AI CHAT
+═══════════════════════════ */
+.chat-wrap { display:flex; flex-direction:column; height:calc(100vh - 160px); min-height:500px; }
+.chat-messages { flex:1; overflow-y:auto; padding:24px 28px; display:flex; flex-direction:column; gap:16px; scroll-behavior:smooth; }
+.chat-messages::-webkit-scrollbar { width:4px; }
+.chat-messages::-webkit-scrollbar-thumb { background:var(--border); border-radius:99px; }
+.bubble-row { display:flex; gap:10px; align-items:flex-end; }
+.bubble-row.user { flex-direction:row-reverse; }
+.bubble-avatar { width:32px; height:32px; border-radius:50%; flex-shrink:0; display:flex; align-items:center; justify-content:center; font-size:14px; }
+.bubble-avatar.ai   { background:linear-gradient(135deg,#7b5ef8,#4f35c8); color:#fff; font-size:12px; font-weight:800; }
+.bubble-avatar.user { background:linear-gradient(135deg,#b8d0f8,#8ab4f0); }
+.bubble { max-width:72%; padding:13px 17px; border-radius:18px; font-size:13.5px; line-height:1.65; font-weight:500; }
+.bubble.ai   { background:var(--card); color:var(--text-dark); border-bottom-left-radius:4px; box-shadow:var(--shadow-sm); white-space:pre-wrap; }
+.bubble.user { background:linear-gradient(135deg,#5b3de8,#4f35c8); color:#fff; border-bottom-right-radius:4px; }
+.bubble-time { font-size:10px; color:var(--text-muted); font-weight:600; margin-top:4px; text-align:right; }
+.typing-bubble { display:flex; gap:5px; align-items:center; padding:14px 18px; }
+.typing-dot { width:7px; height:7px; border-radius:50%; background:var(--purple-mid); animation:typingBounce 1.2s ease-in-out infinite; }
+.typing-dot:nth-child(2){animation-delay:.18s} .typing-dot:nth-child(3){animation-delay:.36s}
+@keyframes typingBounce { 0%,60%,100%{transform:translateY(0)} 30%{transform:translateY(-7px)} }
+.chat-input-bar { padding:18px 24px; border-top:1px solid var(--border); display:flex; gap:10px; align-items:flex-end; background:var(--card); border-radius:0 0 var(--radius) var(--radius); }
+.chat-input { flex:1; padding:12px 16px; border:2px solid var(--border); border-radius:14px; font-size:14px; font-family:'Plus Jakarta Sans',sans-serif; color:var(--text-dark); background:#fafbff; resize:none; outline:none; transition:border-color .18s; max-height:120px; min-height:46px; line-height:1.5; }
+.chat-input:focus { border-color:var(--purple); box-shadow:0 0 0 3px rgba(79,53,200,.1); }
+.btn-send,.btn-mic { width:46px; height:46px; border-radius:13px; border:none; display:flex; align-items:center; justify-content:center; cursor:pointer; flex-shrink:0; transition:transform .18s, box-shadow .18s; }
+.btn-send { background:linear-gradient(135deg,#5b3de8,#4f35c8); color:#fff; box-shadow:0 4px 14px rgba(79,53,200,.38); }
+.btn-send:hover { transform:translateY(-2px); box-shadow:0 8px 22px rgba(79,53,200,.48); }
+.btn-mic { background:var(--purple-light); color:var(--purple); }
+.btn-mic.listening { background:#fee2e2; color:var(--red); animation:micPulse 1s ease-in-out infinite; }
+@keyframes micPulse { 0%,100%{box-shadow:0 0 0 0 rgba(239,68,68,.3)} 50%{box-shadow:0 0 0 8px rgba(239,68,68,0)} }
+.chat-suggestions { display:flex; gap:8px; flex-wrap:wrap; padding:0 28px 16px; }
+.suggestion-chip { padding:7px 14px; border-radius:99px; border:2px solid var(--border); font-size:12px; font-weight:700; color:var(--text-mid); background:var(--card); cursor:pointer; transition:all .18s; white-space:nowrap; }
+.suggestion-chip:hover { border-color:var(--purple); color:var(--purple); background:var(--purple-light); }
+.voice-status { text-align:center; font-size:12px; color:var(--text-muted); font-weight:600; padding:4px 0 0; min-height:20px; }
+
+/* ═══════════════════════════
+   PAGE: REPORT
+═══════════════════════════ */
+.report-layout { display:flex; gap:14px; align-items:flex-start; }
+.report-main  { flex:1; display:flex; flex-direction:column; gap:14px; }
+.report-side  { width:260px; flex-shrink:0; display:flex; flex-direction:column; gap:14px; }
+.report-hero  { padding:32px 36px; }
+.report-hero-top { display:flex; align-items:flex-start; justify-content:space-between; margin-bottom:24px; }
+.report-condition { font-family:'DM Serif Display',serif; font-size:32px; color:var(--text-dark); line-height:1.1; }
+.report-sub { font-size:13px; color:var(--text-muted); margin-top:4px; }
+.report-badge { display:inline-flex; align-items:center; gap:6px; padding:7px 16px; border-radius:99px; font-size:12px; font-weight:800; }
+
+.metrics-row { display:grid; grid-template-columns:repeat(3,1fr); gap:12px; }
+.metric-box { background:#f7f9fe; border-radius:14px; padding:16px; }
+.metric-label { font-size:10px; font-weight:800; color:var(--text-muted); letter-spacing:.8px; text-transform:uppercase; margin-bottom:8px; }
+.metric-val { font-size:22px; font-weight:800; color:var(--text-dark); }
+.risk-gauge { display:flex; align-items:center; gap:8px; margin-top:8px; }
+.risk-dot { width:10px; height:10px; border-radius:50%; flex-shrink:0; }
+
+.waveform-card { padding:20px 24px; }
+.waveform-title { font-size:14px; font-weight:800; color:var(--text-dark); }
+.waveform-sub   { font-size:11px; color:var(--text-muted); margin-bottom:12px; }
+.waveform-area  { height:60px; background:#f7f9fe; border-radius:12px; overflow:hidden; display:flex; align-items:center; }
+
+.reco-card { padding:20px 22px; }
+.reco-title { font-size:13px; font-weight:800; color:var(--text-dark); margin-bottom:12px; }
+.reco-list { display:flex; flex-direction:column; gap:10px; }
+.reco-item { display:flex; align-items:flex-start; gap:10px; }
+.reco-bullet { width:22px; height:22px; background:var(--purple-light); color:var(--purple); border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:10px; font-weight:800; flex-shrink:0; }
+.reco-text { font-size:12px; color:var(--text-mid); line-height:1.6; }
+
+/* ═══════════════════════════
+   PAGE: NOTIFICATIONS
+═══════════════════════════ */
+.notif-layout { display:flex; gap:14px; }
+.notif-main { flex:1; }
+.notif-card { padding:24px 26px; }
+.notif-item { display:flex; align-items:flex-start; gap:14px; padding:14px 0; border-bottom:1px solid var(--border); }
+.notif-item:last-child { border-bottom:none; }
+.notif-dot-wrap { position:relative; flex-shrink:0; }
+.notif-icon-circle { width:42px; height:42px; border-radius:14px; display:flex; align-items:center; justify-content:center; }
+.unread-dot { position:absolute; top:-2px; right:-2px; width:10px; height:10px; background:var(--red); border-radius:50%; border:2px solid var(--card); }
+.notif-info { flex:1; }
+.notif-title { font-size:13px; font-weight:800; color:var(--text-dark); margin-bottom:4px; }
+.notif-msg { font-size:12px; color:var(--text-muted); line-height:1.55; }
+.notif-time { font-size:11px; color:var(--text-muted); font-weight:700; flex-shrink:0; padding-top:2px; }
+
+/* ═══════════════════════════
+   PAGE: SETTINGS
+═══════════════════════════ */
+.settings-grid { display:grid; grid-template-columns:1fr 1fr; gap:14px; }
+.settings-card { padding:24px 28px; }
+.settings-card h3 { font-size:14px; font-weight:800; color:var(--text-dark); margin-bottom:16px; }
+.settings-row { display:flex; align-items:center; justify-content:space-between; padding:10px 0; border-bottom:1px solid var(--border); }
+.settings-row:last-child { border-bottom:none; }
+.settings-label { font-size:13px; font-weight:700; color:var(--text-dark); }
+.settings-sub { font-size:11px; color:var(--text-muted); }
+.toggle { width:44px; height:24px; background:#e2e8f8; border-radius:99px; cursor:pointer; position:relative; transition:background .2s; flex-shrink:0; }
+.toggle.on { background:var(--purple); }
+.toggle::after { content:''; position:absolute; top:3px; left:3px; width:18px; height:18px; background:#fff; border-radius:50%; transition:transform .2s; box-shadow:0 1px 4px rgba(0,0,0,.2); }
+.toggle.on::after { transform:translateX(20px); }
+
+/* ═══════════════════════════
+   TOAST
+═══════════════════════════ */
+.toast {
+  position:fixed; bottom:28px; right:28px;
+  background:var(--text-dark); color:#fff;
+  padding:12px 20px; border-radius:14px;
+  font-size:13px; font-weight:700;
+  box-shadow:var(--shadow-lg);
+  transform:translateY(100px); opacity:0;
+  transition:all .3s cubic-bezier(.22,1,.36,1);
+  z-index:1000;
+}
+.toast.show { transform:translateY(0); opacity:1; }
+
+/* ═══════════════════════════
+   FILE INPUT hidden
+═══════════════════════════ */
+#file-input { display:none; }
+
+/* ═══════════════════════════════════════════
+   DARK MODE
+═══════════════════════════════════════════ */
+body.dark-mode {
+  --bg: #0f1117;
+  --card: #1a1d2e;
+  --purple-light: #2a2550;
+  --active-card: #211d40;
+  --active-border: #4f35c8;
+  --text-dark: #e8ecf8;
+  --text-mid: #9aa3bf;
+  --text-muted: #6b7490;
+  --border: #2a2d45;
+  --shadow-sm: 0 2px 10px rgba(0,0,0,.3), 0 1px 3px rgba(0,0,0,.2);
+  --shadow-md: 0 8px 28px rgba(0,0,0,.4), 0 2px 8px rgba(0,0,0,.2);
+  background: var(--bg);
+}
+body.dark-mode .form-input,
+body.dark-mode .chat-input { background:#12152a; color:var(--text-dark); }
+body.dark-mode .upload-zone { background:rgba(79,53,200,.07); }
+body.dark-mode .organ-card,
+body.dark-mode .mini-stat,
+body.dark-mode .metric-box,
+body.dark-mode .appt-row,
+body.dark-mode .mini-num-box { background:#12152a; }
+body.dark-mode .ecg-wrap,
+body.dark-mode .waveform-area { background:#12152a; }
+body.dark-mode input[type=range] { accent-color: var(--purple); }
+
+/* ═══════════════════════════════════════════
+   MODAL OVERLAY (shared by Admin + View Report)
+═══════════════════════════════════════════ */
+.modal-overlay {
+  display:none; position:fixed; inset:0; z-index:2000;
+  background:rgba(10,11,20,.62); backdrop-filter:blur(6px);
+  align-items:center; justify-content:center; padding:20px;
+}
+.modal-overlay.open { display:flex; }
+.modal-box {
+  background:var(--card); border-radius:24px;
+  box-shadow:0 28px 80px rgba(0,0,0,.28);
+  width:100%; max-width:980px; max-height:92vh;
+  display:flex; flex-direction:column;
+  overflow:hidden; animation:modalIn .3s cubic-bezier(.22,1,.36,1) both;
+}
+@keyframes modalIn { from{opacity:0;transform:scale(.96) translateY(12px)} to{opacity:1;transform:scale(1) translateY(0)} }
+.modal-header {
+  display:flex; align-items:center; justify-content:space-between;
+  padding:22px 28px; border-bottom:1px solid var(--border); flex-shrink:0;
+}
+.modal-header h2 { font-family:'DM Serif Display',serif; font-size:22px; color:var(--text-dark); }
+.modal-header-actions { display:flex; gap:8px; align-items:center; }
+.modal-close {
+  width:34px; height:34px; border-radius:10px; border:none;
+  background:#f1f5fd; color:var(--text-mid); font-size:18px;
+  cursor:pointer; display:flex; align-items:center; justify-content:center;
+  transition:background .18s;
+}
+body.dark-mode .modal-close { background:#232640; }
+.modal-close:hover { background:var(--purple-light); color:var(--purple); }
+.modal-body { flex:1; overflow-y:auto; padding:24px 28px; }
+.modal-body::-webkit-scrollbar { width:4px; }
+.modal-body::-webkit-scrollbar-thumb { background:var(--border); border-radius:99px; }
+
+/* ═══════════════════════════════════════════
+   ADMIN PANEL — TAB BAR
+═══════════════════════════════════════════ */
+.admin-tabs {
+  display:flex; gap:4px; padding:16px 28px 0;
+  border-bottom:1px solid var(--border); flex-shrink:0;
+}
+.admin-tab {
+  padding:10px 20px; border-radius:12px 12px 0 0;
+  font-size:13px; font-weight:700; color:var(--text-muted);
+  cursor:pointer; transition:all .18s; border-bottom:2px solid transparent;
+}
+.admin-tab:hover { color:var(--purple); background:var(--purple-light); }
+.admin-tab.active { color:var(--purple); border-bottom-color:var(--purple); background:var(--purple-light); }
+
+/* ═══════════════════════════════════════════
+   ADMIN PANEL — REGISTER FORM
+═══════════════════════════════════════════ */
+.admin-section { display:none; }
+.admin-section.active { display:block; }
+.admin-form-grid { display:grid; grid-template-columns:1fr 1fr; gap:14px; margin-bottom:20px; }
+.admin-form-full { grid-column:1/-1; }
+.admin-form-group { display:flex; flex-direction:column; gap:6px; }
+.admin-form-label { font-size:12px; font-weight:700; color:var(--text-mid); letter-spacing:.4px; }
+.admin-form-input, .admin-form-select {
+  padding:11px 14px; border:2px solid var(--border); border-radius:12px;
+  font-size:13.5px; font-family:'Plus Jakarta Sans',sans-serif;
+  color:var(--text-dark); background:var(--card); outline:none;
+  transition:border-color .18s, box-shadow .18s;
+}
+.admin-form-input:focus, .admin-form-select:focus {
+  border-color:var(--purple); box-shadow:0 0 0 3px rgba(79,53,200,.1);
+}
+body.dark-mode .admin-form-input,
+body.dark-mode .admin-form-select { background:#12152a; }
+.admin-form-select option { background:var(--card); }
+.admin-id-field {
+  background:var(--purple-light) !important; color:var(--purple) !important;
+  font-weight:800 !important; cursor:default;
+}
+.admin-form-actions { display:flex; gap:10px; justify-content:flex-end; margin-top:4px; }
+.btn-admin-primary {
+  padding:11px 26px; background:linear-gradient(135deg,#5b3de8,#4f35c8);
+  color:#fff; border:none; border-radius:12px; font-size:13px; font-weight:800;
+  font-family:'Plus Jakarta Sans',sans-serif; cursor:pointer;
+  box-shadow:0 4px 16px rgba(79,53,200,.35); transition:transform .18s, box-shadow .18s;
+}
+.btn-admin-primary:hover { transform:translateY(-2px); box-shadow:0 8px 24px rgba(79,53,200,.45); }
+.btn-admin-secondary {
+  padding:11px 22px; background:var(--purple-light); color:var(--purple);
+  border:2px solid var(--active-border); border-radius:12px; font-size:13px; font-weight:800;
+  font-family:'Plus Jakarta Sans',sans-serif; cursor:pointer; transition:background .18s;
+}
+.btn-admin-secondary:hover { background:#e0d8ff; }
+
+/* ═══════════════════════════════════════════
+   ADMIN PANEL — RECORDS TABLE
+═══════════════════════════════════════════ */
+.admin-toolbar {
+  display:flex; gap:10px; align-items:center; margin-bottom:16px; flex-wrap:wrap;
+}
+.admin-search-wrap { flex:1; min-width:180px; position:relative; }
+.admin-search-icon {
+  position:absolute; left:12px; top:50%; transform:translateY(-50%);
+  color:var(--text-muted); pointer-events:none;
+}
+.admin-search {
+  width:100%; padding:10px 14px 10px 36px; border:2px solid var(--border);
+  border-radius:12px; font-size:13px; font-family:'Plus Jakarta Sans',sans-serif;
+  color:var(--text-dark); background:var(--card); outline:none;
+  transition:border-color .18s;
+}
+body.dark-mode .admin-search { background:#12152a; }
+.admin-search:focus { border-color:var(--purple); }
+.admin-filter-select {
+  padding:10px 14px; border:2px solid var(--border); border-radius:12px;
+  font-size:13px; font-family:'Plus Jakarta Sans',sans-serif;
+  color:var(--text-dark); background:var(--card); outline:none; cursor:pointer;
+}
+body.dark-mode .admin-filter-select { background:#12152a; }
+.admin-table-wrap { overflow-x:auto; border-radius:16px; border:1px solid var(--border); }
+.admin-table {
+  width:100%; border-collapse:collapse; font-size:13px;
+}
+.admin-table th {
+  padding:12px 16px; text-align:left; font-size:11px; font-weight:800;
+  color:var(--text-muted); letter-spacing:.7px; text-transform:uppercase;
+  background:#f7f9fe; border-bottom:1px solid var(--border);
+}
+body.dark-mode .admin-table th { background:#12152a; }
+.admin-table td {
+  padding:13px 16px; border-bottom:1px solid var(--border);
+  color:var(--text-dark); vertical-align:middle;
+}
+.admin-table tr:last-child td { border-bottom:none; }
+.admin-table tr:hover td { background:rgba(79,53,200,.04); }
+.admin-table .pt-name { font-weight:700; }
+.admin-table .pt-id { font-size:11px; color:var(--text-muted); font-weight:600; }
+.cond-pill {
+  display:inline-flex; align-items:center; gap:5px; padding:3px 10px;
+  border-radius:99px; font-size:11px; font-weight:800;
+}
+.risk-low  { background:#dcfce7; color:#15803d; }
+.risk-mod  { background:#fef3c7; color:#b45309; }
+.risk-high { background:#fee2e2; color:#b91c1c; }
+.risk-none { background:#f3f4f6; color:#6b7280; }
+.admin-action-btn {
+  padding:5px 12px; border-radius:8px; border:none; font-size:11px; font-weight:800;
+  font-family:'Plus Jakarta Sans',sans-serif; cursor:pointer; transition:all .18s;
+  display:inline-flex; align-items:center; gap:4px;
+}
+.btn-view { background:var(--purple-light); color:var(--purple); }
+.btn-view:hover { background:#ddd6fe; }
+.btn-pdf  { background:#dcfce7; color:#15803d; }
+.btn-pdf:hover { background:#bbf7d0; }
+.btn-del  { background:#fee2e2; color:#b91c1c; }
+.btn-del:hover  { background:#fecaca; }
+.admin-empty {
+  text-align:center; padding:48px 20px; color:var(--text-muted);
+  font-size:14px; font-weight:600;
+}
+.admin-count-badge {
+  padding:3px 10px; border-radius:99px; background:var(--purple-light);
+  color:var(--purple); font-size:11px; font-weight:800;
+}
+
+/* ═══════════════════════════════════════════
+   PATIENT REPORT VIEWER MODAL
+═══════════════════════════════════════════ */
+.pt-report-header {
+  display:flex; gap:18px; align-items:flex-start; margin-bottom:20px;
+  padding-bottom:18px; border-bottom:1px solid var(--border);
+}
+.pt-report-avatar {
+  width:56px; height:56px; border-radius:18px; flex-shrink:0;
+  background:linear-gradient(135deg,var(--purple-light),#c5b8f8);
+  display:flex; align-items:center; justify-content:center;
+  font-size:22px; font-weight:800; color:var(--purple);
+}
+.pt-report-meta h3 { font-family:'DM Serif Display',serif; font-size:20px; color:var(--text-dark); margin-bottom:4px; }
+.pt-report-meta p  { font-size:12px; color:var(--text-muted); }
+.pt-report-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:12px; margin-bottom:18px; }
+.pt-report-box { background:#f7f9fe; border-radius:14px; padding:14px 16px; }
+body.dark-mode .pt-report-box { background:#12152a; }
+.pt-report-box-label { font-size:10px; font-weight:800; color:var(--text-muted); letter-spacing:.7px; text-transform:uppercase; margin-bottom:6px; }
+.pt-report-box-val   { font-size:17px; font-weight:800; color:var(--text-dark); }
+.pt-report-section { margin-bottom:16px; }
+.pt-report-section h4 { font-size:13px; font-weight:800; color:var(--text-dark); margin-bottom:8px; }
+.pt-report-explanation { font-size:13px; color:var(--text-mid); line-height:1.75; background:#f7f9fe; border-radius:14px; padding:16px; }
+body.dark-mode .pt-report-explanation { background:#12152a; }
+
+/* ═══════════════════════════════════════════
+   FULL SETTINGS PAGE (rebuilt)
+═══════════════════════════════════════════ */
+.settings-page-grid { display:grid; grid-template-columns:1fr 1fr; gap:14px; }
+.settings-section-card { padding:24px 28px; }
+.settings-section-card h3 {
+  font-size:13px; font-weight:800; color:var(--text-muted);
+  letter-spacing:.8px; text-transform:uppercase; margin-bottom:16px;
+  display:flex; align-items:center; gap:8px;
+}
+.settings-section-card h3 svg { opacity:.7; }
+.settings-row { display:flex; align-items:center; justify-content:space-between; padding:11px 0; border-bottom:1px solid var(--border); }
+.settings-row:last-child { border-bottom:none; }
+.settings-label { font-size:13px; font-weight:700; color:var(--text-dark); }
+.settings-sub { font-size:11px; color:var(--text-muted); margin-top:2px; }
+.toggle { width:44px; height:24px; background:#e2e8f8; border-radius:99px; cursor:pointer; position:relative; transition:background .2s; flex-shrink:0; }
+.toggle.on { background:var(--purple); }
+.toggle::after { content:''; position:absolute; top:3px; left:3px; width:18px; height:18px; background:#fff; border-radius:50%; transition:transform .2s; box-shadow:0 1px 4px rgba(0,0,0,.2); }
+.toggle.on::after { transform:translateX(20px); }
+.settings-select {
+  padding:7px 12px; border:2px solid var(--border); border-radius:10px;
+  font-size:12px; font-family:'Plus Jakarta Sans',sans-serif;
+  color:var(--text-dark); background:var(--card); outline:none; cursor:pointer;
+}
+body.dark-mode .settings-select { background:#12152a; }
+.settings-slider-wrap { width:130px; }
+.settings-slider { width:100%; accent-color:var(--purple); cursor:pointer; }
+.settings-slider-labels { display:flex; justify-content:space-between; font-size:10px; color:var(--text-muted); font-weight:700; margin-top:2px; }
+.settings-badge {
+  padding:3px 12px; border-radius:99px; font-size:11px; font-weight:800;
+}
+.badge-green { background:#dcfce7; color:#15803d; }
+.badge-blue  { background:#dbeafe; color:#1d4ed8; }
+.badge-purple{ background:var(--purple-light); color:var(--purple); }
+.conf-warning { font-size:11px; color:#f59e0b; font-weight:700; margin-top:4px; display:none; }
+.conf-warning.show { display:block; }
+.settings-radio-group { display:flex; gap:6px; }
+.settings-radio-btn {
+  padding:6px 14px; border-radius:10px; border:2px solid var(--border);
+  font-size:12px; font-weight:700; color:var(--text-mid); cursor:pointer;
+  transition:all .18s; background:var(--card);
+}
+.settings-radio-btn.active { border-color:var(--purple); color:var(--purple); background:var(--purple-light); }
+.about-row { display:flex; align-items:center; justify-content:space-between; padding:9px 0; border-bottom:1px solid var(--border); }
+.about-row:last-child { border-bottom:none; }
+.about-key { font-size:12px; font-weight:700; color:var(--text-mid); }
+.about-val { font-size:12px; font-weight:800; color:var(--text-dark); }
+.settings-save-bar {
+  display:flex; align-items:center; justify-content:space-between;
+  padding:14px 18px; background:var(--purple-light); border-radius:16px;
+  margin-top:4px; grid-column:1/-1;
+}
+.settings-save-bar p { font-size:13px; color:var(--purple); font-weight:700; }
+.btn-save-settings {
+  padding:9px 22px; background:var(--purple); color:#fff; border:none;
+  border-radius:11px; font-size:13px; font-weight:800; cursor:pointer;
+  font-family:'Plus Jakarta Sans',sans-serif; transition:transform .18s;
+}
+.btn-save-settings:hover { transform:translateY(-1px); }
+</style>
+</head>
+<body>
+
+<div id="toast" class="toast"></div>
+<input type="file" id="file-input" accept=".wav"/>
+
+<div class="shell">
+
+  <!-- ═══════════ SIDEBAR ═══════════ -->
+  <nav class="sidebar">
+    <div class="logo-badge" onclick="navigate('overview')">H</div>
+    <div class="nav-group">
+      <div class="nav-item active" id="nav-overview" onclick="navigate('overview')" data-tip="Overview">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>
+      </div>
+      <div class="nav-item" id="nav-analysis" onclick="navigate('analysis')" data-tip="Analyze">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+      </div>
+      <div class="nav-item" id="nav-trends" onclick="navigate('trends')" data-tip="Trends">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 17 9 11 13 15 21 7"/><polyline points="14 7 21 7 21 14"/></svg>
+      </div>
+      <div class="nav-divider"></div>
+      <div class="nav-item" id="nav-report" onclick="navigate('report')" data-tip="Report">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+      </div>
+      <div class="nav-item" id="nav-drai" onclick="navigate('drai')" data-tip="Dr. AI">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
+      </div>
+      <div class="nav-item" id="nav-notifications" onclick="navigate('notifications')" data-tip="Alerts">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 01-3.46 0"/></svg>
+      </div>
+    </div>
+    <div class="nav-bottom-group">
+      <div class="nav-item" id="nav-settings" onclick="navigate('settings')" data-tip="Settings">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>
+      </div>
+    </div>
+  </nav>
+
+  <!-- ═══════════ MAIN ═══════════ -->
+  <main class="main">
+
+    <!-- TOPBAR -->
+    <div class="topbar">
+      <div class="page-heading" id="page-heading"><em>Overview</em> <span class="muted">Conditions</span></div>
+      <div class="admin-pill" id="admin-pill-btn" onclick="openAdminPanel()">
+        <div class="admin-avatar">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#4f6098" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-3.87 3.58-7 8-7s8 3.13 8 7"/></svg>
+        </div>
+        <span class="admin-label">Medical Admin</span>
+      </div>
+    </div>
+
+    <!-- ════ PAGE: OVERVIEW ════ -->
+    <div class="page active" id="page-overview">
+      <div style="display:flex;gap:14px;align-items:flex-start;">
+        <div style="flex:1;display:flex;flex-direction:column;gap:14px;">
+          <!-- Neural Card -->
+          <div class="card card-neural">
+            <div class="neural-text" id="neural-default">
+              <h2>Neural Heart<br>Classification</h2>
+              <p>Upload acoustic data for real-time analysis against the Yaseen Khan dataset.</p>
+              <button class="btn-upload" onclick="navigate('analysis')">Upload .wav File →</button>
+            </div>
+            <div class="upload-overlay" id="neural-analyzing">
+              <div class="analyzing-spinner"></div>
+              <p style="font-weight:700;color:var(--text-dark)">Analyzing heart sound…</p>
+              <p>Running neural classification model</p>
+            </div>
+            <div class="heart-wrap">
+              <svg width="152" height="152" viewBox="0 0 152 152" xmlns="http://www.w3.org/2000/svg">
+                <defs>
+                  <radialGradient id="hg" cx="38%" cy="32%" r="68%"><stop offset="0%" stop-color="#f98080"/><stop offset="55%" stop-color="#e84444"/><stop offset="100%" stop-color="#c42e2e"/></radialGradient>
+                  <radialGradient id="hs" cx="50%" cy="50%" r="50%"><stop offset="0%" stop-color="white" stop-opacity=".72"/><stop offset="100%" stop-color="white" stop-opacity="0"/></radialGradient>
+                </defs>
+                <path d="M76 124C76 124 16 82 16 48 16 27 32 15 50 15 62 15 72.5 22.5 76 34 79.5 22.5 90 15 102 15 120 15 136 27 136 48 136 82 76 124 76 124Z" fill="url(#hg)" stroke="#b82424" stroke-width="3.5" stroke-linejoin="round"/>
+                <ellipse cx="54" cy="40" rx="13" ry="9" fill="url(#hs)" transform="rotate(-25 54 40)"/>
+                <circle cx="60" cy="68" r="8" fill="#141830"/><circle cx="92" cy="68" r="8" fill="#141830"/>
+                <circle cx="63.5" cy="64.5" r="3" fill="white"/><circle cx="95.5" cy="64.5" r="3" fill="white"/>
+                <path d="M57 87 Q76 106 95 87" stroke="#141830" stroke-width="3.8" fill="none" stroke-linecap="round"/>
+                <ellipse cx="43" cy="82" rx="11" ry="6.5" fill="#f8a0a0" opacity="0.42"/>
+                <ellipse cx="109" cy="82" rx="11" ry="6.5" fill="#f8a0a0" opacity="0.42"/>
+              </svg>
+            </div>
+          </div>
+          <!-- Body Condition -->
+          <div class="card card-body">
+            <div class="section-title"><span class="dot"></span> My Body Condition</div>
+            <div class="body-organs">
+              <div class="organ-card active" onclick="selectOrgan(this)">
+                <div class="organ-icon">
+                  <svg width="50" height="50" viewBox="0 0 50 50" fill="none"><defs><radialGradient id="hg2" cx="38%" cy="32%" r="68%"><stop offset="0%" stop-color="#f98080"/><stop offset="100%" stop-color="#d43030"/></radialGradient></defs><path d="M25 42C25 42 7 29 7 17 7 9.5 12.5 5 19.5 5 22.5 5 24.5 7 25 10 25.5 7 27.5 5 30.5 5 37.5 5 43 9.5 43 17 43 29 25 42 25 42Z" fill="url(#hg2)" stroke="#b82020" stroke-width="2"/></svg>
+                </div>
+                <div class="organ-name">My Heart</div>
+                <div class="organ-stats">
+                  <div class="stat-row"><span>Heart Rate</span><span class="val" id="organ-hr">72 bpm</span></div>
+                  <div class="stat-row"><span>Blood Pressure</span><span class="val" id="organ-bp">118/76</span></div>
+                  <div class="stat-row"><span>Glucose</span><span class="val" id="organ-gl">95 mg/dL</span></div>
+                </div>
+              </div>
+              <div class="organ-card" onclick="selectOrgan(this)">
+                <div class="organ-icon">
+                  <svg width="50" height="50" viewBox="0 0 50 50" fill="none"><defs><radialGradient id="dg" cx="40%" cy="30%" r="65%"><stop offset="0%" stop-color="#ff8888"/><stop offset="100%" stop-color="#cc1a1a"/></radialGradient></defs><path d="M25 6C25 6 10 24 10 33 10 41.3 16.7 46 25 46 33.3 46 40 41.3 40 33 40 24 25 6 25 6Z" fill="url(#dg)" stroke="#aa1010" stroke-width="2"/></svg>
+                </div>
+                <div class="organ-name">Blood</div>
+                <div class="organ-stats">
+                  <div class="stat-row"><span>Heart Rate</span><span class="val">118 bpm</span></div>
+                  <div class="stat-row"><span>Minimum</span><span class="val">48 BPM</span></div>
+                  <div class="stat-row"><span>Glucose</span><span class="val">230/ml</span></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <!-- Right Panel -->
+        <div class="right-panel">
+          <div class="card card-stats">
+            <div class="stats-title">My Heart Statistic</div>
+            <div class="bpm-ecg-row">
+              <div><div class="bpm-label">Heart Rate</div><div class="bpm-value" id="sidebar-hr">72 bpm</div></div>
+              <div class="ecg-container">
+                <div class="ecg-label">LIVE ECG</div>
+                <div class="ecg-wrap">
+                  <svg class="ecg-svg" viewBox="0 0 360 36" fill="none">
+                    <polyline points="0,18 15,18 20,6 26,30 31,2 37,28 42,18 60,18 75,18 80,6 86,30 91,2 97,28 102,18 120,18 135,18 140,6 146,30 151,2 157,28 162,18 180,18 195,18 200,6 206,30 211,2 217,28 222,18 240,18 255,18 260,6 266,30 271,2 277,28 282,18 300,18 315,18 320,6 326,30 331,2 337,28 342,18 360,18" stroke="#4f35c8" stroke-width="2.2" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+                  </svg>
+                </div>
+              </div>
+            </div>
+            <div class="progress-bg"><div class="progress-fill"></div></div>
+            <div class="mini-stats-row">
+              <div class="mini-stat">
+                <div class="mini-stat-header"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="7" y1="9" x2="17" y2="9"/><line x1="7" y1="13" x2="13" y2="13"/></svg>Blood Status</div>
+                <div class="mini-stat-val" id="sidebar-bp">118/76 mmHg</div>
+                <svg class="mini-wave" viewBox="0 0 80 22" fill="none"><polyline points="0,11 8,11 12,4 16,18 20,4 24,16 28,11 38,11 42,5 46,17 50,3 54,16 58,11 68,11 80,11" stroke="#5b7dee" stroke-width="1.8" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                <div class="mini-num-row"><div class="mini-num-box"><div class="mini-num" id="sidebar-bp-num">76</div><div class="mini-sub">dia</div></div></div>
+              </div>
+              <div class="mini-stat">
+                <div class="mini-stat-header"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M9 12l2 2 4-4"/></svg>Glucose</div>
+                <div class="mini-stat-val" id="sidebar-gl">95 mg/dL</div>
+                <svg class="mini-wave" viewBox="0 0 80 22" fill="none"><polyline points="0,11 8,7 16,15 24,7 32,15 40,9 48,13 56,7 64,15 72,9 80,11" stroke="#5b7dee" stroke-width="1.8" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                <div class="mini-num-row"><div class="mini-num-box"><div class="mini-num" id="sidebar-gl-num">95</div><div class="mini-sub">mg/dL</div></div></div>
+              </div>
+            </div>
+          </div>
+          <div class="card card-schedule">
+            <div class="schedule-header">
+              <div class="section-title" style="margin-bottom:0"><span class="dot"></span> Checkup Schedule</div>
+              <span class="show-more">Show More</span>
+            </div>
+            <div class="cal-grid">
+              <div class="cal-cell"><div class="cal-day">Thr</div><div class="cal-num">15</div></div>
+              <div class="cal-cell"><div class="cal-day">Fri</div><div class="cal-num">16</div></div>
+              <div class="cal-cell"><div class="cal-day">Sat</div><div class="cal-num">17</div></div>
+              <div class="cal-cell"><div class="cal-day">Mon</div><div class="cal-num today">19</div></div>
+              <div class="cal-cell"><div class="cal-day">Tue</div><div class="cal-num">20</div></div>
+              <div class="cal-cell"><div class="cal-day">Wed</div><div class="cal-num">21</div></div>
+              <div class="cal-cell"><div class="cal-day">Thr</div><div class="cal-num">22</div></div>
+              <div class="cal-cell"><div class="cal-day">Fri</div><div class="cal-num">23</div></div>
+              <div class="cal-cell"><div class="cal-day">Sat</div><div class="cal-num">24</div></div>
+              <div class="cal-cell"><div class="cal-day">Mon</div><div class="cal-num marked">25</div></div>
+              <div class="cal-cell"><div class="cal-day">Tue</div><div class="cal-num">26</div></div>
+              <div class="cal-cell"><div class="cal-day">Wed</div><div class="cal-num">27</div></div>
+              <div class="cal-cell"><div class="cal-day">Thu</div><div class="cal-num">28</div></div>
+              <div class="cal-cell"><div class="cal-day">Fri</div><div class="cal-num">29</div></div>
+            </div>
+            <div class="appt-list">
+              <div class="appt-row">
+                <div class="appt-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#e05050" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.8 4.6a5.5 5.5 0 00-7.8 0L12 5.6l-1-1a5.5 5.5 0 00-7.8 7.8l1 1L12 21l7.8-7.8 1-1a5.5 5.5 0 000-7.8z"/></svg></div>
+                <div class="appt-info"><div class="appt-title">Heart Screening</div><div class="appt-doctor">Dr. Steve Alex</div></div>
+                <div class="appt-arrow">→</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ════ PAGE: ANALYSIS ════ -->
+    <div class="page" id="page-analysis">
+      <div class="analysis-grid">
+        <!-- Upload Zone -->
+        <div class="card" style="padding:24px;">
+          <div class="section-title" style="margin-bottom:16px"><span class="dot"></span> Upload Heart Sound</div>
+          <div class="upload-zone" id="upload-zone" onclick="document.getElementById('file-input').click()" ondragover="event.preventDefault();this.classList.add('drag')" ondragleave="this.classList.remove('drag')" ondrop="handleDrop(event)">
+            <div class="upload-zone-icon">
+              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#5b3de8" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 16 12 12 8 16"/><line x1="12" y1="12" x2="12" y2="21"/><path d="M20.39 18.39A5 5 0 0018 9h-1.26A8 8 0 103 16.3"/></svg>
+            </div>
+            <h3>Drop .wav file here</h3>
+            <p>or click to browse · WAV format only</p>
+            <p id="file-name-display" style="font-size:12px;font-weight:800;color:var(--purple);display:none;"></p>
+          </div>
+          <div style="margin-top:16px;display:flex;gap:10px;">
+            <button class="btn-upload" id="analyze-btn" onclick="runAnalysis()" style="display:none;width:100%;">🫀 Analyze Now</button>
+          </div>
+          <div id="analyzing-state" style="display:none;flex-direction:column;align-items:center;gap:12px;padding:20px 0;">
+            <div class="analyzing-spinner"></div>
+            <p style="font-weight:700;color:var(--text-dark);font-size:14px;">Analyzing heart sound…</p>
+            <p style="font-size:12px;color:var(--text-muted);">Extracting MFCCs → Running KNN model → Asking Dr. AI</p>
+          </div>
+        </div>
+
+        <!-- Result Card -->
+        <div class="card result-card" id="result-panel">
+          <div class="empty-result" id="result-empty">
+            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#c5b8f8" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+            <p>Upload a heart sound .wav file<br>to see your classification result here.</p>
+          </div>
+          <div id="result-content" style="display:none;flex-direction:column;gap:14px;">
+            <div>
+              <div class="result-label">Detected Condition</div>
+              <div class="result-condition" id="res-condition">—</div>
+              <div style="margin-top:8px;display:flex;gap:8px;align-items:center;">
+                <span class="result-badge" id="res-badge">—</span>
+                <span style="font-size:12px;color:var(--text-muted)" id="res-risk-label">—</span>
+              </div>
+            </div>
+            <div class="conf-bar-wrap">
+              <div class="conf-bar-label"><span>Model Confidence</span><span id="res-conf-pct">—</span></div>
+              <div class="conf-bar-bg"><div class="conf-bar-fill" id="res-conf-bar" style="width:0%;background:var(--purple)"></div></div>
+            </div>
+            <div>
+              <div class="result-label" style="margin-bottom:8px;">Class Breakdown</div>
+              <div class="breakdown-grid" id="res-breakdown"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Dr. AI Explanation -->
+      <div class="card explanation-card" id="explanation-panel" style="display:none;">
+        <h3>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#5b3de8" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
+          Dr. AI Explanation
+        </h3>
+        <div id="explanation-skel" class="explanation-skeleton">
+          <div class="skel-line" style="width:90%"></div>
+          <div class="skel-line" style="width:75%"></div>
+          <div class="skel-line" style="width:85%"></div>
+          <div class="skel-line" style="width:60%"></div>
+        </div>
+        <div class="explanation-text" id="explanation-text" style="display:none;"></div>
+      </div>
+    </div>
+
+    <!-- ════ PAGE: TRENDS ════ -->
+    <div class="page" id="page-trends">
+      <div class="trends-grid">
+        <div class="card trend-card">
+          <h3>Heart Rate Trend</h3>
+          <div class="sub">Last 7 days average</div>
+          <div class="chart-area">
+            <svg viewBox="0 0 300 130" preserveAspectRatio="none">
+              <defs><linearGradient id="areaGrad" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#4f35c8" stop-opacity=".18"/><stop offset="100%" stop-color="#4f35c8" stop-opacity="0"/></linearGradient></defs>
+              <path d="M0,90 C30,80 60,60 90,65 C120,70 150,50 180,55 C210,60 240,45 300,40 L300,130 L0,130 Z" fill="url(#areaGrad)"/>
+              <path d="M0,90 C30,80 60,60 90,65 C120,70 150,50 180,55 C210,60 240,45 300,40" stroke="#4f35c8" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+              <circle cx="300" cy="40" r="5" fill="#4f35c8"/>
+            </svg>
+          </div>
+          <div class="trend-foot"><div class="trend-val">120 bpm</div><div class="trend-change up">↑ +4 bpm</div></div>
+        </div>
+        <div class="card trend-card">
+          <h3>Blood Pressure</h3>
+          <div class="sub">Systolic / Diastolic</div>
+          <div class="chart-area">
+            <svg viewBox="0 0 300 130" preserveAspectRatio="none">
+              <defs><linearGradient id="areaGrad2" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#f59e0b" stop-opacity=".15"/><stop offset="100%" stop-color="#f59e0b" stop-opacity="0"/></linearGradient></defs>
+              <path d="M0,70 C40,65 80,55 120,60 C160,65 200,50 250,58 C270,62 285,60 300,55 L300,130 L0,130 Z" fill="url(#areaGrad2)"/>
+              <path d="M0,70 C40,65 80,55 120,60 C160,65 200,50 250,58 C270,62 285,60 300,55" stroke="#f59e0b" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+              <circle cx="300" cy="55" r="5" fill="#f59e0b"/>
+            </svg>
+          </div>
+          <div class="trend-foot"><div class="trend-val">116/70</div><div class="trend-change flat">→ Stable</div></div>
+        </div>
+        <div class="card trend-card">
+          <h3>Glucose Level</h3>
+          <div class="sub">mg/dL readings</div>
+          <div class="chart-area">
+            <svg viewBox="0 0 300 130" preserveAspectRatio="none">
+              <defs><linearGradient id="areaGrad3" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#ef4444" stop-opacity=".12"/><stop offset="100%" stop-color="#ef4444" stop-opacity="0"/></linearGradient></defs>
+              <path d="M0,95 C30,90 60,85 90,75 C120,65 150,70 180,60 C210,50 250,45 300,35 L300,130 L0,130 Z" fill="url(#areaGrad3)"/>
+              <path d="M0,95 C30,90 60,85 90,75 C120,65 150,70 180,60 C210,50 250,45 300,35" stroke="#ef4444" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+              <circle cx="300" cy="35" r="5" fill="#ef4444"/>
+            </svg>
+          </div>
+          <div class="trend-foot"><div class="trend-val">230 mg</div><div class="trend-change down">↑ High</div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ════ PAGE: REPORT ════ -->
+    <div class="page" id="page-report">
+      <div id="report-empty" style="display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:60vh;gap:14px;text-align:center;">
+        <svg width="56" height="56" viewBox="0 0 24 24" fill="none" stroke="#c5b8f8" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+        <p style="font-size:14px;color:var(--text-muted);">No report yet. Upload and analyze a heart sound first.</p>
+        <button class="btn-upload" onclick="navigate('analysis')">Go to Analysis →</button>
+      </div>
+      <div id="report-filled" style="display:none;">
+        <div class="report-layout">
+          <div class="report-main">
+            <div class="card report-hero">
+              <div class="report-hero-top">
+                <div>
+                  <div style="font-size:11px;font-weight:800;color:var(--text-muted);letter-spacing:.8px;text-transform:uppercase;margin-bottom:8px;">Latest Analysis Report</div>
+                  <div class="report-condition" id="rpt-condition">—</div>
+                  <div class="report-sub" id="rpt-sub">—</div>
+                </div>
+                <span class="report-badge" id="rpt-badge">—</span>
+              </div>
+              <div class="metrics-row">
+                <div class="metric-box">
+                  <div class="metric-label">Confidence</div>
+                  <div class="metric-val" id="rpt-conf">—</div>
+                </div>
+                <div class="metric-box">
+                  <div class="metric-label">Risk Level</div>
+                  <div class="metric-val" id="rpt-risk" style="color:var(--orange)">—</div>
+                  <div class="risk-gauge">
+                    <div class="risk-dot" style="background:#22c55e"></div>
+                    <div style="flex:1;height:8px;background:#edf0fa;border-radius:99px;overflow:hidden;"><div id="rpt-risk-bar" style="height:100%;width:0%;background:linear-gradient(90deg,#22c55e,#f59e0b);border-radius:99px;"></div></div>
+                    <div class="risk-dot" style="background:#ef4444"></div>
+                  </div>
+                </div>
+                <div class="metric-box">
+                  <div class="metric-label">Source File</div>
+                  <div style="font-size:13px;font-weight:800;color:var(--text-dark);margin-top:4px;" id="rpt-file">—</div>
+                  <div style="font-size:11px;color:var(--text-muted);margin-top:4px;">Model: KNN · Yaseen Khan</div>
+                </div>
+              </div>
+            </div>
+            <div class="card waveform-card">
+              <div class="waveform-title">Acoustic Waveform</div>
+              <div class="waveform-sub">Uploaded heart sound signal</div>
+              <div class="waveform-area">
+                <svg width="100%" height="60" viewBox="0 0 600 60" preserveAspectRatio="none">
+                  <polyline points="0,30 10,28 20,32 30,15 40,45 50,20 60,38 70,25 80,35 90,18 100,42 110,22 120,36 130,28 140,32 150,10 160,50 170,18 180,40 190,25 200,35 210,20 220,38 230,28 240,32 250,12 260,48 270,20 280,38 290,25 300,33 310,18 320,42 330,22 340,36 350,28 360,32 370,14 380,46 390,20 400,38 410,25 420,34 430,19 440,40 450,27 460,33 470,16 480,44 490,21 500,38 510,26 520,34 530,20 540,40 550,28 560,32 570,15 580,45 590,22 600,30" stroke="#4f35c8" stroke-width="1.5" fill="none" stroke-linecap="round" stroke-linejoin="round" opacity=".7"/>
+                </svg>
+              </div>
+            </div>
+          </div>
+          <div class="report-side">
+            <div class="card reco-card">
+              <div class="reco-title">Recommendations</div>
+              <div class="reco-list" id="rpt-recos"></div>
+            </div>
+            <div class="card reco-card">
+              <div class="reco-title">Dr. AI Summary</div>
+              <div class="explanation-text" id="rpt-explanation" style="font-size:12px;color:var(--text-mid);line-height:1.7;"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ════ PAGE: DR. AI CHAT ════ -->
+    <div class="page" id="page-drai">
+      <div class="card chat-wrap">
+        <div class="chat-messages" id="chat-messages">
+          <div class="bubble-row">
+            <div class="bubble-avatar ai">AI</div>
+            <div>
+              <div class="bubble ai">Hello! I'm Dr. AI, your personal cardiac health assistant powered by Groq. I can help you understand your heart sound analysis results, explain heart conditions, and answer questions about heart health. How can I help you today? 💙</div>
+              <div class="bubble-time">Just now</div>
+            </div>
+          </div>
+        </div>
+        <div class="chat-suggestions" id="chat-suggestions">
+          <div class="suggestion-chip" onclick="sendSuggestion(this)">What is Aortic Stenosis?</div>
+          <div class="suggestion-chip" onclick="sendSuggestion(this)">Explain my latest result</div>
+          <div class="suggestion-chip" onclick="sendSuggestion(this)">What is Mitral Regurgitation?</div>
+          <div class="suggestion-chip" onclick="sendSuggestion(this)">Heart healthy diet tips</div>
+        </div>
+        <div class="voice-status" id="voice-status"></div>
+        <div class="chat-input-bar">
+          <button class="btn-mic" id="btn-mic" onclick="toggleVoice()">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 1a3 3 0 00-3 3v8a3 3 0 006 0V4a3 3 0 00-3-3z"/><path d="M19 10v2a7 7 0 01-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg>
+          </button>
+          <textarea class="chat-input" id="chat-input" rows="1" placeholder="Ask Dr. AI anything about heart health…" onkeydown="handleKey(event)" oninput="autoResize(this)"></textarea>
+          <button class="btn-send" onclick="sendMessage()">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ════ PAGE: NOTIFICATIONS ════ -->
+    <div class="page" id="page-notifications">
+      <div class="notif-layout">
+        <div class="notif-main">
+          <div class="card notif-card">
+            <div class="section-title" style="margin-bottom:4px"><span class="dot"></span> Notifications</div>
+            <p style="font-size:12px;color:var(--text-muted);margin-bottom:16px">3 unread alerts</p>
+            <div class="notif-item">
+              <div class="notif-dot-wrap">
+                <div class="notif-icon-circle" style="background:#fee2e2"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#ef4444" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.8 4.6a5.5 5.5 0 00-7.8 0L12 5.6l-1-1a5.5 5.5 0 00-7.8 7.8l1 1L12 21l7.8-7.8 1-1a5.5 5.5 0 000-7.8z"/></svg></div>
+                <div class="unread-dot"></div>
+              </div>
+              <div class="notif-info">
+                <div class="notif-title">⚠️ Analysis Complete</div>
+                <div class="notif-msg" id="notif-result-msg">Upload a heart sound to see your results here.</div>
+              </div>
+              <div class="notif-time">Now</div>
+            </div>
+            <div class="notif-item">
+              <div class="notif-dot-wrap">
+                <div class="notif-icon-circle" style="background:#fef3c7"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg></div>
+                <div class="unread-dot"></div>
+              </div>
+              <div class="notif-info">
+                <div class="notif-title">Glucose Level Above Normal</div>
+                <div class="notif-msg">Your glucose reading of 230/ml is above the recommended range. Consider adjusting your diet.</div>
+              </div>
+              <div class="notif-time">1h ago</div>
+            </div>
+            <div class="notif-item">
+              <div class="notif-dot-wrap">
+                <div class="notif-icon-circle" style="background:var(--purple-light)"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#5b3de8" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg></div>
+                <div class="unread-dot"></div>
+              </div>
+              <div class="notif-info">
+                <div class="notif-title">Upcoming: Heart Screening</div>
+                <div class="notif-msg">You have a Heart Screening appointment with Dr. Steve Alex on Monday, April 25.</div>
+              </div>
+              <div class="notif-time">3h ago</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ════ PAGE: SETTINGS ════ -->
+    <div class="page" id="page-settings">
+      <div class="settings-page-grid">
+
+        <!-- App Settings -->
+        <div class="card settings-section-card">
+          <h3><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg> App Settings</h3>
+          <div class="settings-row">
+            <div><div class="settings-label">Dark Mode</div><div class="settings-sub">Switch to dark theme</div></div>
+            <div class="toggle" id="toggle-darkmode" onclick="toggleDarkMode(this)"></div>
+          </div>
+          <div class="settings-row">
+            <div><div class="settings-label">Language</div><div class="settings-sub">Interface language</div></div>
+            <select class="settings-select" id="setting-language">
+              <option value="en" selected>🇬🇧 English</option>
+              <option value="hi" disabled>🇮🇳 Hindi (soon)</option>
+              <option value="ar" disabled>🇸🇦 Arabic (soon)</option>
+              <option value="fr" disabled>🇫🇷 French (soon)</option>
+              <option value="es" disabled>🇪🇸 Spanish (soon)</option>
+            </select>
+          </div>
+          <div class="settings-row">
+            <div><div class="settings-label">Notifications</div><div class="settings-sub">Alert on new analysis</div></div>
+            <div class="toggle on" id="toggle-notifications" onclick="this.classList.toggle('on'); saveSettings()"></div>
+          </div>
+          <div class="settings-row">
+            <div><div class="settings-label">Auto-report</div><div class="settings-sub">Auto-generate after analysis</div></div>
+            <div class="toggle" id="toggle-autoreport" onclick="this.classList.toggle('on'); saveSettings()"></div>
+          </div>
+        </div>
+
+        <!-- Analysis Settings -->
+        <div class="card settings-section-card">
+          <h3><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg> Analysis Settings</h3>
+          <div class="settings-row" style="flex-direction:column; align-items:flex-start; gap:8px;">
+            <div style="display:flex;justify-content:space-between;width:100%;align-items:center;">
+              <div><div class="settings-label">Confidence Threshold</div><div class="settings-sub">Warn if model confidence is below this</div></div>
+              <span id="conf-threshold-val" style="font-size:14px;font-weight:800;color:var(--purple);">60%</span>
+            </div>
+            <input type="range" class="settings-slider" id="conf-threshold" min="30" max="95" value="60" style="width:100%"
+              oninput="updateConfThreshold(this.value)">
+            <div class="settings-slider-labels"><span>30%</span><span>62%</span><span>95%</span></div>
+            <div class="conf-warning" id="conf-warning">⚠️ Results below this threshold are flagged as low-confidence</div>
+          </div>
+          <div class="settings-row">
+            <div><div class="settings-label">Auto-save Results</div><div class="settings-sub">Save analysis to patient records</div></div>
+            <div class="toggle on" id="toggle-autosave" onclick="this.classList.toggle('on'); saveSettings()"></div>
+          </div>
+        </div>
+
+        <!-- Dr. AI Settings -->
+        <div class="card settings-section-card">
+          <h3><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg> Dr. AI Settings</h3>
+          <div class="settings-row">
+            <div><div class="settings-label">Dr. AI Explanations</div><div class="settings-sub">Show AI explanation after analysis</div></div>
+            <div class="toggle on" id="toggle-drai" onclick="this.classList.toggle('on'); saveSettings()"></div>
+          </div>
+          <div class="settings-row">
+            <div><div class="settings-label">Voice Output</div><div class="settings-sub">Dr. AI speaks replies aloud</div></div>
+            <div class="toggle on" id="toggle-voice" onclick="this.classList.toggle('on'); saveSettings()"></div>
+          </div>
+          <div class="settings-row">
+            <div><div class="settings-label">Response Length</div><div class="settings-sub">Dr. AI reply detail level</div></div>
+            <div class="settings-radio-group" id="drai-length-group">
+              <div class="settings-radio-btn active" onclick="setResponseLength('brief', this)">Brief</div>
+              <div class="settings-radio-btn" onclick="setResponseLength('detailed', this)">Detailed</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- About -->
+        <div class="card settings-section-card">
+          <h3><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg> About</h3>
+          <div class="about-row"><span class="about-key">App</span><span class="about-val">Heartify Pro</span></div>
+          <div class="about-row"><span class="about-key">Version</span><span class="about-val"><span class="settings-badge badge-purple">v2.0.0</span></span></div>
+          <div class="about-row"><span class="about-key">ML Model</span><span class="about-val">KNN · Yaseen Khan</span></div>
+          <div class="about-row"><span class="about-key">Classes</span><span class="about-val">AS, MR, MS, MVP, Normal</span></div>
+          <div class="about-row"><span class="about-key">AI Backend</span><span class="about-val">Groq · Llama 3 70B</span></div>
+          <div class="about-row"><span class="about-key">Flask API</span><span class="about-val" id="api-status" style="font-size:12px;font-weight:800;color:var(--text-muted)">Checking…</span></div>
+        </div>
+
+        <!-- Save bar -->
+        <div class="settings-save-bar">
+          <p>⚙️ Changes are saved automatically to your browser.</p>
+          <button class="btn-save-settings" onclick="saveSettings(); showToast('✅ Settings saved!')">Save Settings</button>
+        </div>
+
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<!-- ══════════════════════════════════════════════
+     ADMIN PANEL MODAL
+══════════════════════════════════════════════ -->
+<div class="modal-overlay" id="admin-modal">
+  <div class="modal-box" style="max-width:1020px;">
+    <div class="modal-header">
+      <div style="display:flex;align-items:center;gap:14px;">
+        <div style="width:40px;height:40px;background:linear-gradient(135deg,#7b5ef8,#4f35c8);border-radius:13px;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-3.87 3.58-7 8-7s8 3.13 8 7"/></svg>
+        </div>
+        <div>
+          <h2>Medical Admin Panel</h2>
+          <p style="font-size:12px;color:var(--text-muted);margin-top:1px;">Patient management &amp; records</p>
+        </div>
+      </div>
+      <div class="modal-header-actions">
+        <span class="admin-count-badge" id="admin-patient-count">0 patients</span>
+        <button class="modal-close" onclick="closeAdminPanel()">✕</button>
+      </div>
+    </div>
+
+    <!-- Tab bar -->
+    <div class="admin-tabs">
+      <div class="admin-tab active" id="atab-register" onclick="switchAdminTab('register')">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" style="display:inline;vertical-align:middle;margin-right:5px;"><path d="M16 21v-2a4 4 0 00-8 0v2"/><circle cx="12" cy="7" r="4"/><line x1="19" y1="8" x2="19" y2="14"/><line x1="22" y1="11" x2="16" y2="11"/></svg>Register Patient
+      </div>
+      <div class="admin-tab" id="atab-records" onclick="switchAdminTab('records')">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" style="display:inline;vertical-align:middle;margin-right:5px;"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>Patient Records
+      </div>
+    </div>
+
+    <div class="modal-body">
+
+      <!-- ── REGISTER SECTION ── -->
+      <div class="admin-section active" id="asec-register">
+        <div style="margin-bottom:20px;">
+          <div style="font-size:15px;font-weight:800;color:var(--text-dark);margin-bottom:4px;">New Patient Registration</div>
+          <div style="font-size:13px;color:var(--text-muted);">Register a new patient and link them to the latest heart analysis result.</div>
+        </div>
+        <div class="admin-form-grid">
+          <div class="admin-form-group">
+            <label class="admin-form-label">Full Name *</label>
+            <input type="text" class="admin-form-input" id="pt-name" placeholder="e.g. John Smith">
+          </div>
+          <div class="admin-form-group">
+            <label class="admin-form-label">Patient ID (auto)</label>
+            <input type="text" class="admin-form-input admin-id-field" id="pt-id" readonly>
+          </div>
+          <div class="admin-form-group">
+            <label class="admin-form-label">Age *</label>
+            <input type="number" class="admin-form-input" id="pt-age" placeholder="e.g. 45" min="1" max="120">
+          </div>
+          <div class="admin-form-group">
+            <label class="admin-form-label">Gender *</label>
+            <select class="admin-form-select" id="pt-gender">
+              <option value="">— Select —</option>
+              <option>Male</option><option>Female</option><option>Non-binary</option><option>Prefer not to say</option>
+            </select>
+          </div>
+          <div class="admin-form-group">
+            <label class="admin-form-label">Phone Number</label>
+            <input type="tel" class="admin-form-input" id="pt-phone" placeholder="e.g. +91 98765 43210">
+          </div>
+          <div class="admin-form-group">
+            <label class="admin-form-label">Date of Visit *</label>
+            <input type="date" class="admin-form-input" id="pt-date">
+          </div>
+        </div>
+
+        <div style="background:var(--purple-light);border-radius:14px;padding:16px 18px;margin-bottom:20px;">
+          <div style="font-size:12px;font-weight:800;color:var(--purple);margin-bottom:8px;">🩺 Link Latest Analysis Result</div>
+          <div id="pt-analysis-preview" style="font-size:13px;color:var(--text-mid);">No analysis yet — run an analysis first from the Analysis page.</div>
+        </div>
+
+        <div class="admin-form-actions">
+          <button class="btn-admin-secondary" onclick="resetPatientForm()">Clear Form</button>
+          <button class="btn-admin-primary" onclick="registerPatient()">Register Patient →</button>
+        </div>
+      </div>
+
+      <!-- ── RECORDS SECTION ── -->
+      <div class="admin-section" id="asec-records">
+        <div class="admin-toolbar">
+          <div class="admin-search-wrap">
+            <svg class="admin-search-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+            <input type="text" class="admin-search" id="admin-search" placeholder="Search by name, ID, condition…" oninput="renderPatientsTable()">
+          </div>
+          <select class="admin-filter-select" id="admin-filter-risk" onchange="renderPatientsTable()">
+            <option value="">All Risk Levels</option>
+            <option value="Low">Low Risk</option>
+            <option value="Moderate">Moderate Risk</option>
+            <option value="High">High Risk</option>
+          </select>
+          <select class="admin-filter-select" id="admin-filter-cond" onchange="renderPatientsTable()">
+            <option value="">All Conditions</option>
+            <option value="Normal">Normal</option>
+            <option value="AS">AS</option>
+            <option value="MR">MR</option>
+            <option value="MS">MS</option>
+            <option value="MVP">MVP</option>
+          </select>
+        </div>
+
+        <div class="admin-table-wrap">
+          <table class="admin-table">
+            <thead>
+              <tr>
+                <th>Patient</th>
+                <th>Age / Gender</th>
+                <th>Date of Visit</th>
+                <th>Condition</th>
+                <th>Risk</th>
+                <th>Confidence</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="admin-table-body">
+              <tr><td colspan="7" class="admin-empty">No patients registered yet. Use the Register tab to add the first patient.</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════
+     PATIENT REPORT VIEWER MODAL
+══════════════════════════════════════════════ -->
+<div class="modal-overlay" id="pt-report-modal">
+  <div class="modal-box" style="max-width:680px;">
+    <div class="modal-header">
+      <h2>Patient Report</h2>
+      <div class="modal-header-actions">
+        <button class="btn-admin-primary" style="padding:8px 18px;font-size:12px;" onclick="exportPDF()">⬇ Export PDF</button>
+        <button class="modal-close" onclick="closePtReport()">✕</button>
+      </div>
+    </div>
+    <div class="modal-body" id="pt-report-body"><!-- filled dynamically --></div>
+  </div>
+</div>
+
+<script>
+// ════════════════════════════════════════
+//  NAVIGATION
+// ════════════════════════════════════════
+// Auto-detect backend — tries localhost first, falls back to 127.0.0.1
+const BACKEND = 'http://127.0.0.1:5000';
+
+const PAGE_TITLES = {
+  overview:      '<em>Overview</em> <span class="muted">Conditions</span>',
+  analysis:      '<em>Analysis</em> <span class="muted">Upload & Detect</span>',
+  trends:        '<em>Health</em> <span class="muted">Trends</span>',
+  report:        '<em>Latest</em> <span class="muted">Report</span>',
+  drai:          '<em>Dr. AI</em> <span class="muted">Assistant</span>',
+  notifications: '<em>Alerts</em> <span class="muted">& Updates</span>',
+  settings:      '<em>Settings</em> <span class="muted">& Preferences</span>',
+};
+
+function navigate(page) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  const pg = document.getElementById('page-' + page);
+  if (pg) pg.classList.add('active');
+  const nav = document.getElementById('nav-' + page);
+  if (nav) nav.classList.add('active');
+  document.getElementById('page-heading').innerHTML = PAGE_TITLES[page] || page;
+  if (page === 'settings') { checkApiStatus(); loadSettings(); }
+}
+
+function selectOrgan(el) {
+  document.querySelectorAll('.organ-card').forEach(c => c.classList.remove('active'));
+  el.classList.add('active');
+}
+
+// ════════════════════════════════════════
+//  FILE UPLOAD + ANALYSIS
+// ════════════════════════════════════════
+let selectedFile = null;
+
+document.getElementById('file-input').addEventListener('change', function() {
+  if (this.files[0]) onFileSelected(this.files[0]);
+});
+
+function handleDrop(e) {
+  e.preventDefault();
+  document.getElementById('upload-zone').classList.remove('drag');
+  const file = e.dataTransfer.files[0];
+  if (file && file.name.endsWith('.wav')) onFileSelected(file);
+  else showToast('Please drop a .wav file');
+}
+
+function onFileSelected(file) {
+  selectedFile = file;
+  const nameEl = document.getElementById('file-name-display');
+  nameEl.textContent = '📁 ' + file.name;
+  nameEl.style.display = 'block';
+  document.getElementById('analyze-btn').style.display = 'block';
+  showToast('File selected: ' + file.name);
+}
+
+async function runAnalysis() {
+  if (!selectedFile) { showToast('Please select a .wav file first'); return; }
+
+  // Show analyzing state
+  document.getElementById('analyze-btn').style.display = 'none';
+  document.getElementById('analyzing-state').style.display = 'flex';
+  document.getElementById('result-empty').style.display = 'none';
+  document.getElementById('result-content').style.display = 'none';
+  document.getElementById('explanation-panel').style.display = 'none';
+
+  const formData = new FormData();
+  formData.append('file', selectedFile);
+
+  try {
+    const res = await fetch(BACKEND + '/predict', { method: 'POST', body: formData });
+    if (!res.ok) { const e = await res.json(); throw new Error(e.error || 'Server error'); }
+    const data = await res.json();
+
+    // Hide analyzing
+    document.getElementById('analyzing-state').style.display = 'none';
+
+    // Populate result card
+    document.getElementById('result-content').style.display = 'flex';
+    document.getElementById('res-condition').textContent = data.label;
+    document.getElementById('res-badge').textContent = data.icon + ' ' + data.prediction;
+    document.getElementById('res-badge').style.background = data.color + '22';
+    document.getElementById('res-badge').style.color = data.color;
+    document.getElementById('res-risk-label').textContent = 'Risk: ' + data.risk;
+    document.getElementById('res-conf-pct').textContent = data.confidence + '%';
+    setTimeout(() => {
+      document.getElementById('res-conf-bar').style.width = data.confidence + '%';
+    }, 100);
+
+    // Breakdown
+    const breakdown = document.getElementById('res-breakdown');
+    breakdown.innerHTML = '';
+    Object.entries(data.breakdown).sort((a,b)=>b[1]-a[1]).forEach(([cls, pct]) => {
+      const isTop = cls === data.prediction;
+      breakdown.innerHTML += `
+        <div class="breakdown-row">
+          <div class="breakdown-name">${cls}</div>
+          <div class="breakdown-bar-bg"><div class="breakdown-bar-fill ${isTop?'top':''}" style="width:${pct}%"></div></div>
+          <div class="breakdown-pct">${pct}%</div>
+        </div>`;
+    });
+    setTimeout(() => {
+      document.querySelectorAll('.breakdown-bar-fill').forEach(b => b.style.width = b.style.width);
+    }, 100);
+
+    // Show explanation panel with skeleton
+    document.getElementById('explanation-panel').style.display = 'block';
+    document.getElementById('explanation-skel').style.display = 'flex';
+    document.getElementById('explanation-text').style.display = 'none';
+
+    // Fill explanation (comes from server)
+    document.getElementById('explanation-skel').style.display = 'none';
+    document.getElementById('explanation-text').style.display = 'block';
+    document.getElementById('explanation-text').textContent = data.explanation;
+
+    // Populate Report page
+    populateReport(data);
+    // Update vitals dynamically based on heart condition
+    if (data.prediction) updateVitals(data.prediction);
+
+    // Store latest result globally for admin panel linking
+    window._latestAnalysis = data;
+    window._latestFileName = selectedFile.name;
+
+    // Auto-save if enabled
+    const autoSave = document.getElementById('toggle-autosave');
+    if (autoSave && autoSave.classList.contains('on')) {
+      // preview in admin panel
+    }
+
+    // Update notification
+    document.getElementById('notif-result-msg').textContent =
+      `Analysis complete: ${data.label} detected with ${data.confidence}% confidence.`;
+
+    showToast('✅ Analysis complete!');
+
+    // Confidence threshold warning
+    checkConfThreshold(data.confidence);
+
+  } catch (err) {
+    document.getElementById('analyzing-state').style.display = 'none';
+    document.getElementById('result-empty').style.display = 'flex';
+    document.getElementById('result-empty').querySelector('p').textContent = '❌ ' + err.message + '\n\nMake sure flask_app.py is running on localhost:5000';
+    showToast('Error: ' + err.message);
+  }
+}
+
+function checkConfThreshold(confidence) {
+  try {
+    const threshold = parseInt(document.getElementById('conf-threshold').value) || 60;
+    if (confidence < threshold) {
+      showToast(`⚠️ Confidence ${confidence}% is below your threshold of ${threshold}%`);
+    }
+  } catch(e) {}
+}
+
+function populateReport(data) {
+  document.getElementById('report-empty').style.display = 'none';
+  document.getElementById('report-filled').style.display = 'block';
+
+  document.getElementById('rpt-condition').textContent = data.label;
+  document.getElementById('rpt-sub').textContent = data.advice;
+  document.getElementById('rpt-badge').textContent = data.icon + ' ' + data.prediction;
+  document.getElementById('rpt-badge').style.background = data.color + '22';
+  document.getElementById('rpt-badge').style.color = data.color;
+  document.getElementById('rpt-conf').textContent = data.confidence + '%';
+  document.getElementById('rpt-risk').textContent = data.risk;
+  document.getElementById('rpt-file').textContent = selectedFile.name;
+  document.getElementById('rpt-explanation').textContent = data.explanation;
+  setTimeout(() => {
+    document.getElementById('rpt-risk-bar').style.width = data.risk_pct + '%';
+  }, 200);
+
+  // Recommendations by condition
+  const recosMap = {
+    normal: ['Maintain regular annual cardiac checkups','Continue a heart-healthy lifestyle with regular exercise','Monitor blood pressure and cholesterol levels routinely'],
+    AS: ['Schedule an echocardiogram with a cardiologist immediately','Avoid strenuous physical activity until evaluated','Discuss valve replacement options with your cardiologist','Report any chest pain, dizziness or fainting to ER'],
+    MR: ['Schedule an echocardiogram with a cardiologist within 2 weeks','Reduce sodium intake and monitor blood pressure daily','Avoid strenuous physical activity until follow-up','Report any new symptoms like chest pain or shortness of breath'],
+    MS: ['Seek evaluation from a cardiac specialist soon','Monitor for symptoms: fatigue, shortness of breath, palpitations','Discuss medication options with your cardiologist','Consider lifestyle modifications to reduce heart strain'],
+    MVP: ['Follow up with a cardiologist for routine monitoring','Most MVP cases are benign — stay calm and informed','Report any palpitations, chest pain or dizziness','Maintain a heart-healthy lifestyle']
+  };
+  const recos = recosMap[data.prediction] || recosMap.normal;
+  const recosEl = document.getElementById('rpt-recos');
+  recosEl.innerHTML = recos.map((r, i) => `
+    <div class="reco-item">
+      <div class="reco-bullet">${i+1}</div>
+      <div class="reco-text">${r}</div>
+    </div>`).join('');
+}
+
+// ════════════════════════════════════════
+//  DR. AI CHAT  (via Groq backend)
+// ════════════════════════════════════════
+let chatHistory = [];
+let isListening = false;
+let recognition = null;
+
+function autoResize(el) {
+  el.style.height = 'auto';
+  el.style.height = Math.min(el.scrollHeight, 120) + 'px';
+}
+
+function handleKey(e) {
+  if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); }
+}
+
+function sendSuggestion(el) {
+  document.getElementById('chat-input').value = el.textContent;
+  document.getElementById('chat-suggestions').style.display = 'none';
+  sendMessage();
+}
+
+function nowTime() {
+  return new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+}
+
+function addBubble(text, role) {
+  const msgs = document.getElementById('chat-messages');
+  const row = document.createElement('div');
+  row.className = 'bubble-row' + (role === 'user' ? ' user' : '');
+  const avatar = document.createElement('div');
+  avatar.className = 'bubble-avatar ' + (role === 'user' ? 'user' : 'ai');
+  avatar.textContent = role === 'user' ? '👤' : 'AI';
+  const wrapper = document.createElement('div');
+  const bubble = document.createElement('div');
+  bubble.className = 'bubble ' + role;
+  bubble.textContent = text;
+  const time = document.createElement('div');
+  time.className = 'bubble-time';
+  time.textContent = nowTime();
+  wrapper.appendChild(bubble);
+  wrapper.appendChild(time);
+  row.appendChild(avatar);
+  row.appendChild(wrapper);
+  msgs.appendChild(row);
+  msgs.scrollTop = msgs.scrollHeight;
+  return bubble;
+}
+
+function showTyping() {
+  const msgs = document.getElementById('chat-messages');
+  const row = document.createElement('div');
+  row.className = 'bubble-row'; row.id = 'typing-indicator';
+  row.innerHTML = `<div class="bubble-avatar ai">AI</div><div class="bubble ai typing-bubble"><div class="typing-dot"></div><div class="typing-dot"></div><div class="typing-dot"></div></div>`;
+  msgs.appendChild(row); msgs.scrollTop = msgs.scrollHeight;
+}
+function hideTyping() { const el = document.getElementById('typing-indicator'); if(el) el.remove(); }
+
+async function sendMessage() {
+  const input = document.getElementById('chat-input');
+  const text = input.value.trim();
+  if (!text) return;
+  document.getElementById('chat-suggestions').style.display = 'none';
+  addBubble(text, 'user');
+  chatHistory.push({ role: 'user', content: text });
+  input.value = ''; input.style.height = 'auto';
+  showTyping();
+
+  try {
+    const res = await fetch(BACKEND + '/chat', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ messages: chatHistory })
+    });
+    const data = await res.json();
+    if (data.error) throw new Error(data.error);
+    hideTyping();
+    addBubble(data.reply, 'ai');
+    chatHistory.push({ role: 'assistant', content: data.reply });
+    if (isVoiceOutputEnabled()) speak(data.reply);
+  } catch (err) {
+    hideTyping();
+    addBubble('Sorry, I couldn\'t connect to the server. Make sure flask_app.py is running.', 'ai');
+  }
+}
+
+// ════════ VOICE INPUT / OUTPUT ════════
+function isVoiceOutputEnabled() {
+  const toggle = document.getElementById('toggle-voice');
+  return toggle ? toggle.classList.contains('on') : true;
+}
+
+function setupRecognition() {
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if (!SR) return null;
+  const rec = new SR();
+  rec.lang = 'en-US'; rec.continuous = false; rec.interimResults = false;
+  rec.onresult = (e) => {
+    const transcript = e.results[0][0].transcript;
+    document.getElementById('chat-input').value = transcript;
+    setVoiceStatus('✅ Heard: "' + transcript.slice(0, 40) + (transcript.length > 40 ? '…' : '') + '"');
+    stopListening();
+    setTimeout(() => { setVoiceStatus(''); sendMessage(); }, 400);
+  };
+  rec.onerror = (e) => {
+    const msgs = { 'no-speech': 'No speech detected. Try again.', 'not-allowed': 'Microphone access denied.', 'network': 'Network error during recognition.' };
+    setVoiceStatus(msgs[e.error] || 'Voice error: ' + e.error);
+    stopListening();
+  };
+  rec.onend = () => { if (isListening) stopListening(); };
+  return rec;
+}
+function setVoiceStatus(msg) { document.getElementById('voice-status').textContent = msg; }
+function startListening() {
+  if (!recognition) recognition = setupRecognition();
+  if (!recognition) { setVoiceStatus('❌ Voice not supported. Use Chrome or Edge.'); return; }
+  isListening = true;
+  document.getElementById('btn-mic').classList.add('listening');
+  setVoiceStatus('🎤 Listening… speak now');
+  try { recognition.start(); } catch(e) { stopListening(); }
+}
+function stopListening() {
+  isListening = false;
+  document.getElementById('btn-mic').classList.remove('listening');
+  if (recognition) { try { recognition.stop(); } catch(e){} }
+}
+function toggleVoice() { isListening ? (stopListening(), setVoiceStatus('')) : startListening(); }
+function speak(text) {
+  if (!window.speechSynthesis) return;
+  window.speechSynthesis.cancel();
+  const sentences = text.match(/[^.!?]*[.!?]+/g) || [text];
+  const spoken = sentences.slice(0, 2).join(' ').trim() || text.slice(0, 220);
+  const u = new SpeechSynthesisUtterance(spoken);
+  u.rate = 0.93; u.pitch = 1.0; u.lang = 'en-US';
+  const loadVoices = () => {
+    const voices = window.speechSynthesis.getVoices();
+    const preferred = voices.find(v =>
+      v.name.includes('Samantha') || v.name.includes('Karen') ||
+      v.name.includes('Google UK English Female') || v.name.includes('Microsoft Zira')
+    );
+    if (preferred) u.voice = preferred;
+    window.speechSynthesis.speak(u);
+  };
+  if (window.speechSynthesis.getVoices().length) loadVoices();
+  else { window.speechSynthesis.onvoiceschanged = loadVoices; }
+}
+
+// ════════════════════════════════════════
+//  API STATUS CHECK
+// ════════════════════════════════════════
+async function checkApiStatus() {
+  const el = document.getElementById('api-status');
+  if (!el) return;
+  try {
+    const res = await fetch(BACKEND + '/health');
+    if (res.ok) { el.textContent = '✅ Online'; el.style.color = 'var(--green)'; }
+    else throw new Error();
+  } catch {
+    el.textContent = '❌ Offline'; el.style.color = 'var(--red)';
+  }
+}
+
+// ════════════════════════════════════════
+//  TOAST
+// ════════════════════════════════════════
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 3000);
+}
+
+// Init
+checkApiStatus();
+
+// ── Dynamic Vitals Per Condition ──────────────────────────
+const VITALS = {
+  normal: { hr: '72 bpm', sys: '118', dia: '76', glucose: '95', label: 'Normal Range' },
+  AS:     { hr: '88 bpm', sys: '145', dia: '90', glucose: '110', label: 'Elevated' },
+  MR:     { hr: '96 bpm', sys: '130', dia: '85', glucose: '105', label: 'Above Normal' },
+  MS:     { hr: '104 bpm', sys: '125', dia: '82', glucose: '108', label: 'Above Normal' },
+  MVP:    { hr: '80 bpm', sys: '120', dia: '78', glucose: '98', label: 'Near Normal' },
+};
+
+function updateVitals(prediction) {
+  const v = VITALS[prediction] || VITALS.normal;
+  const bp = v.sys + '/' + v.dia;
+
+  const organHr = document.getElementById('organ-hr');
+  const organBp = document.getElementById('organ-bp');
+  const organGl = document.getElementById('organ-gl');
+  if (organHr) organHr.textContent = v.hr;
+  if (organBp) organBp.textContent = bp;
+  if (organGl) organGl.textContent = v.glucose + ' mg/dL';
+
+  const sideHr = document.getElementById('sidebar-hr');
+  const sideBp = document.getElementById('sidebar-bp');
+  const sideBpNum = document.getElementById('sidebar-bp-num');
+  const sideGl = document.getElementById('sidebar-gl');
+  const sideGlNum = document.getElementById('sidebar-gl-num');
+  if (sideHr) sideHr.textContent = v.hr;
+  if (sideBp) sideBp.textContent = bp + ' mmHg';
+  if (sideBpNum) sideBpNum.textContent = v.dia;
+  if (sideGl) sideGl.textContent = v.glucose + ' mg/dL';
+  if (sideGlNum) sideGlNum.textContent = v.glucose;
+
+  const trendCards = document.querySelectorAll('#page-trends .trend-card');
+  if (trendCards[0]) trendCards[0].querySelector('.trend-val').textContent = v.hr;
+  if (trendCards[1]) trendCards[1].querySelector('.trend-val').textContent = bp;
+  if (trendCards[2]) trendCards[2].querySelector('.trend-val').textContent = v.glucose + ' mg/dL';
+
+  const badgeMap = { normal:'flat', AS:'down', MR:'down', MS:'down', MVP:'flat' };
+  const badgeClass = badgeMap[prediction] || 'flat';
+  document.querySelectorAll('#page-trends .trend-change').forEach(el => {
+    el.className = 'trend-change ' + badgeClass;
+    el.textContent = badgeClass === 'flat' ? '→ Stable' : '↑ Elevated';
+  });
+
+  window._currentVitals = v;
+  window._currentPrediction = prediction;
+}
+
+// ══════════════════════════════════════════════════════════
+//  ADMIN PANEL — FEATURE 1
+// ══════════════════════════════════════════════════════════
+const STORAGE_KEY = 'heartify_patients';
+
+function getPatients() {
+  try { return JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]'); } catch { return []; }
+}
+function savePatients(list) {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(list));
+  updatePatientCount();
+}
+function updatePatientCount() {
+  const n = getPatients().length;
+  const el = document.getElementById('admin-patient-count');
+  if (el) el.textContent = n + ' patient' + (n !== 1 ? 's' : '');
+}
+
+function generatePatientId() {
+  const prefix = 'HP';
+  const num = String(Date.now()).slice(-6);
+  return prefix + num;
+}
+
+function openAdminPanel() {
+  document.getElementById('admin-modal').classList.add('open');
+  // Set today's date as default
+  const dateEl = document.getElementById('pt-date');
+  if (dateEl && !dateEl.value) dateEl.value = new Date().toISOString().split('T')[0];
+  // Auto-generate patient ID
+  document.getElementById('pt-id').value = generatePatientId();
+  // Show latest analysis info
+  updateAnalysisPreview();
+  updatePatientCount();
+  renderPatientsTable();
+}
+
+function closeAdminPanel() {
+  document.getElementById('admin-modal').classList.remove('open');
+}
+
+function updateAnalysisPreview() {
+  const el = document.getElementById('pt-analysis-preview');
+  if (!el) return;
+  if (window._latestAnalysis) {
+    const d = window._latestAnalysis;
+    el.innerHTML = `<span style="font-weight:800;color:var(--text-dark)">🩺 ${d.label}</span>
+      &nbsp;·&nbsp; Confidence: <strong>${d.confidence}%</strong>
+      &nbsp;·&nbsp; Risk: <strong>${d.risk}</strong>
+      &nbsp;·&nbsp; File: <em>${window._latestFileName || 'unknown'}</em>`;
+  } else {
+    el.textContent = 'No analysis yet — run an analysis first from the Analysis page.';
+  }
+}
+
+function switchAdminTab(tab) {
+  document.querySelectorAll('.admin-tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.admin-section').forEach(s => s.classList.remove('active'));
+  document.getElementById('atab-' + tab).classList.add('active');
+  document.getElementById('asec-' + tab).classList.add('active');
+  if (tab === 'records') renderPatientsTable();
+}
+
+function resetPatientForm() {
+  ['pt-name','pt-age','pt-phone'].forEach(id => { const el = document.getElementById(id); if(el) el.value=''; });
+  document.getElementById('pt-gender').value = '';
+  document.getElementById('pt-date').value = new Date().toISOString().split('T')[0];
+  document.getElementById('pt-id').value = generatePatientId();
+}
+
+function registerPatient() {
+  const name   = document.getElementById('pt-name').value.trim();
+  const age    = document.getElementById('pt-age').value.trim();
+  const gender = document.getElementById('pt-gender').value;
+  const phone  = document.getElementById('pt-phone').value.trim();
+  const date   = document.getElementById('pt-date').value;
+  const pid    = document.getElementById('pt-id').value;
+
+  if (!name) { showToast('⚠️ Please enter the patient\'s full name'); return; }
+  if (!age)  { showToast('⚠️ Please enter the patient\'s age'); return; }
+  if (!gender) { showToast('⚠️ Please select gender'); return; }
+  if (!date) { showToast('⚠️ Please enter the date of visit'); return; }
+
+  const analysis = window._latestAnalysis ? {
+    condition: window._latestAnalysis.prediction,
+    label: window._latestAnalysis.label,
+    risk: window._latestAnalysis.risk,
+    confidence: window._latestAnalysis.confidence,
+    explanation: window._latestAnalysis.explanation || '',
+    file: window._latestFileName || '',
+    icon: window._latestAnalysis.icon || '🫀',
+    color: window._latestAnalysis.color || '#4f35c8',
+  } : null;
+
+  const patient = { pid, name, age, gender, phone, date, analysis, registeredAt: new Date().toISOString() };
+  const list = getPatients();
+  list.unshift(patient);
+  savePatients(list);
+
+  showToast('✅ Patient ' + name + ' registered!');
+  resetPatientForm();
+  switchAdminTab('records');
+}
+
+function renderPatientsTable() {
+  const search = (document.getElementById('admin-search')?.value || '').toLowerCase();
+  const filterRisk = document.getElementById('admin-filter-risk')?.value || '';
+  const filterCond = document.getElementById('admin-filter-cond')?.value || '';
+
+  let patients = getPatients();
+
+  if (search) {
+    patients = patients.filter(p =>
+      p.name.toLowerCase().includes(search) ||
+      p.pid.toLowerCase().includes(search) ||
+      (p.analysis?.condition || '').toLowerCase().includes(search) ||
+      (p.analysis?.label || '').toLowerCase().includes(search)
+    );
+  }
+  if (filterRisk) patients = patients.filter(p => (p.analysis?.risk || '').includes(filterRisk));
+  if (filterCond) patients = patients.filter(p => (p.analysis?.condition || '') === filterCond);
+
+  const tbody = document.getElementById('admin-table-body');
+  if (!tbody) return;
+
+  if (patients.length === 0) {
+    tbody.innerHTML = `<tr><td colspan="7" class="admin-empty">${search||filterRisk||filterCond ? 'No patients match your filters.' : 'No patients registered yet.'}</td></tr>`;
+    return;
+  }
+
+  tbody.innerHTML = patients.map(p => {
+    const cond    = p.analysis?.condition || '—';
+    const label   = p.analysis?.label || '—';
+    const risk    = p.analysis?.risk || '—';
+    const conf    = p.analysis?.confidence != null ? p.analysis.confidence + '%' : '—';
+    const icon    = p.analysis?.icon || '🫀';
+    const color   = p.analysis?.color || '#6b7280';
+    const riskClass = risk.includes('High') ? 'risk-high' : risk.includes('Moderate') ? 'risk-mod' : risk.includes('Low') ? 'risk-low' : 'risk-none';
+    const dateStr = p.date ? new Date(p.date + 'T00:00:00').toLocaleDateString('en-GB', {day:'numeric',month:'short',year:'numeric'}) : '—';
+
+    return `<tr>
+      <td>
+        <div class="pt-name">${escapeHtml(p.name)}</div>
+        <div class="pt-id">${p.pid}</div>
+      </td>
+      <td>${p.age} / ${p.gender}</td>
+      <td>${dateStr}</td>
+      <td><span class="cond-pill" style="background:${color}18;color:${color}">${icon} ${label}</span></td>
+      <td><span class="cond-pill ${riskClass}">${risk}</span></td>
+      <td style="font-weight:800;">${conf}</td>
+      <td style="display:flex;gap:5px;flex-wrap:wrap;">
+        <button class="admin-action-btn btn-view" onclick="viewPatientReport('${p.pid}')">👁 View</button>
+        <button class="admin-action-btn btn-pdf"  onclick="exportPatientPDF('${p.pid}')">⬇ PDF</button>
+        <button class="admin-action-btn btn-del"  onclick="deletePatient('${p.pid}')">✕ Del</button>
+      </td>
+    </tr>`;
+  }).join('');
+}
+
+function escapeHtml(s) { return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+function deletePatient(pid) {
+  if (!confirm('Delete this patient record? This cannot be undone.')) return;
+  const list = getPatients().filter(p => p.pid !== pid);
+  savePatients(list);
+  renderPatientsTable();
+  showToast('🗑 Patient record deleted');
+}
+
+// ── PATIENT REPORT VIEWER ──
+let _viewingPatient = null;
+
+function viewPatientReport(pid) {
+  const patient = getPatients().find(p => p.pid === pid);
+  if (!patient) return;
+  _viewingPatient = patient;
+
+  const a = patient.analysis;
+  const recosMap = {
+    normal: ['Maintain regular annual cardiac checkups','Continue a heart-healthy lifestyle with regular exercise'],
+    AS: ['Schedule an echocardiogram with a cardiologist immediately','Avoid strenuous physical activity until evaluated'],
+    MR: ['Schedule an echocardiogram with a cardiologist within 2 weeks','Reduce sodium intake and monitor blood pressure daily'],
+    MS: ['Seek evaluation from a cardiac specialist soon','Discuss medication options with your cardiologist'],
+    MVP: ['Follow up with a cardiologist for routine monitoring','Most MVP cases are benign — stay calm and informed']
+  };
+  const recos = a ? (recosMap[a.condition] || recosMap.normal) : [];
+  const dateStr = patient.date ? new Date(patient.date + 'T00:00:00').toLocaleDateString('en-GB',{day:'numeric',month:'long',year:'numeric'}) : '—';
+
+  const initials = patient.name.split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase();
+
+  document.getElementById('pt-report-body').innerHTML = `
+    <div class="pt-report-header">
+      <div class="pt-report-avatar">${initials}</div>
+      <div class="pt-report-meta">
+        <h3>${escapeHtml(patient.name)}</h3>
+        <p>Patient ID: ${patient.pid} &nbsp;·&nbsp; ${patient.age} yrs &nbsp;·&nbsp; ${patient.gender} &nbsp;·&nbsp; Visit: ${dateStr}</p>
+        ${patient.phone ? `<p style="margin-top:3px;">📞 ${escapeHtml(patient.phone)}</p>` : ''}
+      </div>
+    </div>
+    ${a ? `
+    <div class="pt-report-grid">
+      <div class="pt-report-box">
+        <div class="pt-report-box-label">Condition</div>
+        <div class="pt-report-box-val" style="font-size:15px;">${a.icon} ${a.label}</div>
+      </div>
+      <div class="pt-report-box">
+        <div class="pt-report-box-label">Risk Level</div>
+        <div class="pt-report-box-val" style="font-size:15px;">${a.risk}</div>
+      </div>
+      <div class="pt-report-box">
+        <div class="pt-report-box-label">Confidence</div>
+        <div class="pt-report-box-val">${a.confidence}%</div>
+      </div>
+    </div>
+    <div class="pt-report-section">
+      <h4>🤖 Dr. AI Explanation</h4>
+      <div class="pt-report-explanation">${a.explanation ? escapeHtml(a.explanation) : 'No explanation recorded.'}</div>
+    </div>
+    <div class="pt-report-section">
+      <h4>📋 Recommendations</h4>
+      ${recos.map((r,i) => `<div style="display:flex;gap:10px;align-items:flex-start;margin-bottom:8px;font-size:13px;color:var(--text-mid);">
+        <div style="width:22px;height:22px;background:var(--purple-light);color:var(--purple);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:800;flex-shrink:0;">${i+1}</div>
+        <div>${r}</div></div>`).join('')}
+    </div>
+    ` : '<p style="color:var(--text-muted);font-size:13px;">No analysis results linked to this patient.</p>'}
+    <div style="margin-top:8px;padding:12px 14px;background:var(--purple-light);border-radius:12px;font-size:11px;color:var(--text-muted);">
+      ⚕️ This report is generated by Heartify Pro for clinical reference. Always confirm findings with a qualified cardiologist.
+    </div>`;
+
+  document.getElementById('pt-report-modal').classList.add('open');
+}
+
+function closePtReport() {
+  document.getElementById('pt-report-modal').classList.remove('open');
+}
+
+// ── PDF EXPORT ──
+function exportPatientPDF(pid) {
+  const patient = getPatients().find(p => p.pid === pid);
+  if (!patient) return;
+  _viewingPatient = patient;
+  exportPDF();
+}
+
+function exportPDF() {
+  const patient = _viewingPatient;
+  if (!patient) { showToast('No patient selected'); return; }
+
+  if (typeof window.jspdf === 'undefined' && typeof jspdf === 'undefined') {
+    showToast('⚠️ PDF library not loaded. Check your internet connection.');
+    return;
+  }
+
+  const { jsPDF } = window.jspdf || jspdf;
+  const doc = new jsPDF({ orientation:'portrait', unit:'mm', format:'a4' });
+
+  const W = 210, M = 18;
+  let y = 0;
+
+  // ── Header band ──
+  doc.setFillColor(79, 53, 200);
+  doc.rect(0, 0, W, 36, 'F');
+  doc.setTextColor(255,255,255);
+  doc.setFontSize(20); doc.setFont('helvetica','bold');
+  doc.text('HEARTIFY PRO', M, 16);
+  doc.setFontSize(9); doc.setFont('helvetica','normal');
+  doc.text('Clinical Heart Sound Analysis Report', M, 23);
+  doc.setFontSize(8);
+  doc.text('Generated: ' + new Date().toLocaleDateString('en-GB',{day:'numeric',month:'long',year:'numeric',hour:'2-digit',minute:'2-digit'}), M, 30);
+  y = 46;
+
+  // ── Patient details ──
+  doc.setTextColor(20,24,48); doc.setFontSize(14); doc.setFont('helvetica','bold');
+  doc.text('Patient Information', M, y); y += 7;
+  doc.setDrawColor(200,210,240); doc.setLineWidth(0.4);
+  doc.line(M, y, W - M, y); y += 6;
+
+  doc.setFontSize(10); doc.setFont('helvetica','normal'); doc.setTextColor(60,70,100);
+  const info = [
+    ['Full Name', patient.name],
+    ['Patient ID', patient.pid],
+    ['Age', patient.age + ' years'],
+    ['Gender', patient.gender],
+    ['Phone', patient.phone || '—'],
+    ['Date of Visit', patient.date ? new Date(patient.date+'T00:00:00').toLocaleDateString('en-GB',{day:'numeric',month:'long',year:'numeric'}) : '—'],
+  ];
+  info.forEach(([k,v]) => {
+    doc.setFont('helvetica','bold'); doc.text(k + ':', M, y);
+    doc.setFont('helvetica','normal'); doc.text(String(v), M + 40, y);
+    y += 7;
+  });
+  y += 4;
+
+  const a = patient.analysis;
+  if (a) {
+    // ── Analysis results ──
+    doc.setFontSize(14); doc.setFont('helvetica','bold'); doc.setTextColor(20,24,48);
+    doc.text('Analysis Results', M, y); y += 7;
+    doc.setDrawColor(200,210,240); doc.line(M, y, W-M, y); y += 6;
+
+    doc.setFillColor(235,229,255);
+    doc.roundedRect(M, y, W-M*2, 22, 3, 3, 'F');
+    doc.setTextColor(79,53,200); doc.setFontSize(12); doc.setFont('helvetica','bold');
+    doc.text(a.icon + '  ' + a.label, M+6, y+8);
+    doc.setFontSize(9); doc.setFont('helvetica','normal');
+    doc.text('Risk: ' + a.risk + '   Confidence: ' + a.confidence + '%   File: ' + (a.file || '—'), M+6, y+16);
+    y += 30;
+
+    // ── Explanation ──
+    if (a.explanation) {
+      doc.setFontSize(12); doc.setFont('helvetica','bold'); doc.setTextColor(20,24,48);
+      doc.text('Dr. AI Explanation', M, y); y += 7;
+      doc.setDrawColor(200,210,240); doc.line(M, y, W-M, y); y += 5;
+      doc.setFontSize(9); doc.setFont('helvetica','normal'); doc.setTextColor(60,70,100);
+      const lines = doc.splitTextToSize(a.explanation, W - M*2);
+      lines.forEach(line => {
+        if (y > 270) { doc.addPage(); y = 20; }
+        doc.text(line, M, y); y += 5;
+      });
+      y += 4;
+    }
+
+    // ── Recommendations ──
+    const recosMap = {
+      normal: ['Maintain regular annual cardiac checkups','Continue a heart-healthy lifestyle'],
+      AS: ['Schedule an echocardiogram with a cardiologist immediately','Avoid strenuous physical activity'],
+      MR: ['Schedule an echocardiogram within 2 weeks','Reduce sodium intake'],
+      MS: ['Seek evaluation from a cardiac specialist','Discuss medication options'],
+      MVP: ['Follow up with a cardiologist for routine monitoring','Most MVP cases are benign']
+    };
+    const recos = recosMap[a.condition] || recosMap.normal;
+    doc.setFontSize(12); doc.setFont('helvetica','bold'); doc.setTextColor(20,24,48);
+    doc.text('Clinical Recommendations', M, y); y += 7;
+    doc.setDrawColor(200,210,240); doc.line(M, y, W-M, y); y += 5;
+    doc.setFontSize(9); doc.setFont('helvetica','normal'); doc.setTextColor(60,70,100);
+    recos.forEach((r,i) => {
+      if (y > 270) { doc.addPage(); y = 20; }
+      doc.text((i+1) + '. ' + r, M, y); y += 6;
+    });
+  }
+
+  // ── Footer ──
+  const pages = doc.getNumberOfPages();
+  for (let i = 1; i <= pages; i++) {
+    doc.setPage(i);
+    doc.setFillColor(245,247,254); doc.rect(0,285,W,12,'F');
+    doc.setFontSize(7); doc.setTextColor(140,150,180); doc.setFont('helvetica','normal');
+    doc.text('Heartify Pro  ·  Clinical Heart Sound Analysis  ·  Confidential Patient Record', M, 291);
+    doc.text('Page ' + i + ' of ' + pages, W-M, 291, {align:'right'});
+  }
+
+  doc.save('Heartify_Report_' + patient.pid + '_' + patient.name.replace(/\s+/g,'_') + '.pdf');
+  showToast('📄 PDF exported!');
+}
+
+// Close modals on overlay click
+document.getElementById('admin-modal').addEventListener('click', function(e) {
+  if (e.target === this) closeAdminPanel();
+});
+document.getElementById('pt-report-modal').addEventListener('click', function(e) {
+  if (e.target === this) closePtReport();
+});
+
+// ══════════════════════════════════════════════════════════
+//  SETTINGS — FEATURE 2
+// ══════════════════════════════════════════════════════════
+const SETTINGS_KEY = 'heartify_settings';
+
+function getSettings() {
+  try { return JSON.parse(localStorage.getItem(SETTINGS_KEY) || '{}'); } catch { return {}; }
+}
+
+function saveSettings() {
+  const s = {
+    darkMode:      document.getElementById('toggle-darkmode')?.classList.contains('on') || false,
+    notifications: document.getElementById('toggle-notifications')?.classList.contains('on') ?? true,
+    autoreport:    document.getElementById('toggle-autoreport')?.classList.contains('on') || false,
+    confThreshold: document.getElementById('conf-threshold')?.value || 60,
+    autosave:      document.getElementById('toggle-autosave')?.classList.contains('on') ?? true,
+    draiEnabled:   document.getElementById('toggle-drai')?.classList.contains('on') ?? true,
+    voiceOutput:   document.getElementById('toggle-voice')?.classList.contains('on') ?? true,
+    responseLength: document.querySelector('.settings-radio-btn.active')?.textContent || 'Brief',
+    language:      document.getElementById('setting-language')?.value || 'en',
+  };
+  localStorage.setItem(SETTINGS_KEY, JSON.stringify(s));
+}
+
+function loadSettings() {
+  const s = getSettings();
+
+  function setToggle(id, val) {
+    const el = document.getElementById(id); if (!el) return;
+    val ? el.classList.add('on') : el.classList.remove('on');
+  }
+
+  setToggle('toggle-darkmode',      s.darkMode ?? false);
+  setToggle('toggle-notifications', s.notifications ?? true);
+  setToggle('toggle-autoreport',    s.autoreport ?? false);
+  setToggle('toggle-autosave',      s.autosave ?? true);
+  setToggle('toggle-drai',          s.draiEnabled ?? true);
+  setToggle('toggle-voice',         s.voiceOutput ?? true);
+
+  if (s.darkMode) document.body.classList.add('dark-mode');
+  else document.body.classList.remove('dark-mode');
+
+  const ct = document.getElementById('conf-threshold');
+  const ctv = document.getElementById('conf-threshold-val');
+  if (ct && s.confThreshold) { ct.value = s.confThreshold; }
+  if (ctv && s.confThreshold) { ctv.textContent = s.confThreshold + '%'; }
+
+  if (s.responseLength) {
+    document.querySelectorAll('#drai-length-group .settings-radio-btn').forEach(btn => {
+      btn.classList.toggle('active', btn.textContent === s.responseLength);
+    });
+  }
+
+  const langEl = document.getElementById('setting-language');
+  if (langEl && s.language) langEl.value = s.language;
+}
+
+function toggleDarkMode(el) {
+  el.classList.toggle('on');
+  document.body.classList.toggle('dark-mode', el.classList.contains('on'));
+  saveSettings();
+}
+
+function updateConfThreshold(val) {
+  const el = document.getElementById('conf-threshold-val');
+  if (el) el.textContent = val + '%';
+  const warn = document.getElementById('conf-warning');
+  if (warn) warn.classList.toggle('show', parseInt(val) < 70);
+  saveSettings();
+}
+
+function setResponseLength(val, btn) {
+  document.querySelectorAll('#drai-length-group .settings-radio-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  saveSettings();
+}
+
+// Load settings on startup
+loadSettings();
+
+</script>
+</body>
+</html>

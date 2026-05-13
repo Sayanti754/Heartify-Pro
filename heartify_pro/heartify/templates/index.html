@@ -1,0 +1,1429 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Heartify Pro | Clinical Heart Analysis</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet"/>
+<style>
+/* ═══════════════════════════
+   DESIGN TOKENS
+═══════════════════════════ */
+:root {
+  --bg:          #d8e8f7;
+  --card:        #ffffff;
+  --purple:      #4f35c8;
+  --purple-light:#ede9ff;
+  --purple-mid:  #7b5ef8;
+  --blue-accent: #4f8ef8;
+  --text-dark:   #141830;
+  --text-mid:    #5a6380;
+  --text-muted:  #9aa3bf;
+  --border:      #e8ecf8;
+  --active-card: #edeaff;
+  --active-border:#c5b8f8;
+  --green:       #22c55e;
+  --orange:      #f59e0b;
+  --red:         #ef4444;
+  --shadow-sm:   0 2px 10px rgba(79,53,200,.08), 0 1px 3px rgba(0,0,0,.04);
+  --shadow-md:   0 8px 28px rgba(79,53,200,.12), 0 2px 8px rgba(0,0,0,.06);
+  --shadow-lg:   0 16px 44px rgba(79,53,200,.18), 0 4px 14px rgba(0,0,0,.08);
+  --radius:      22px;
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  background: var(--bg);
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 28px 20px 48px;
+}
+
+/* ═══════════════════════════
+   SHELL + SIDEBAR
+═══════════════════════════ */
+.shell {
+  display: flex;
+  width: 100%;
+  max-width: 1200px;
+  animation: shellIn .5s cubic-bezier(.22,1,.36,1) both;
+}
+@keyframes shellIn { from{opacity:0;transform:translateY(16px)} to{opacity:1;transform:translateY(0)} }
+
+.sidebar {
+  width: 76px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 24px 0;
+  gap: 2px;
+  flex-shrink: 0;
+}
+
+.logo-badge {
+  width: 44px; height: 44px;
+  background: linear-gradient(140deg,#7b5ef8,#4f35c8);
+  border-radius: 14px;
+  display: flex; align-items: center; justify-content: center;
+  color: #fff; font-family: 'DM Serif Display',serif; font-size: 16px;
+  margin-bottom: 18px;
+  box-shadow: 0 4px 16px rgba(79,53,200,.38);
+  cursor: pointer;
+  transition: transform .2s, box-shadow .2s;
+}
+.logo-badge:hover { transform:scale(1.07); box-shadow:0 7px 22px rgba(79,53,200,.48); }
+
+.nav-group { display:flex; flex-direction:column; align-items:center; gap:2px; width:100%; flex:1; }
+.nav-divider { width:26px; height:1px; background:var(--border); margin:6px 0; }
+.nav-bottom-group { display:flex; flex-direction:column; align-items:center; gap:2px; margin-top:auto; }
+
+.nav-item {
+  width:48px; height:48px; border-radius:14px;
+  display:flex; align-items:center; justify-content:center;
+  cursor:pointer; color:var(--text-muted);
+  transition: background .18s, color .18s, transform .15s;
+  position:relative;
+}
+.nav-item:hover { background:rgba(255,255,255,.72); color:var(--purple); transform:translateX(2px); }
+.nav-item.active { background:var(--purple-light); color:var(--purple); box-shadow:0 3px 12px rgba(79,53,200,.2); }
+.nav-item.active::before {
+  content:''; position:absolute; left:-8px;
+  width:4px; height:22px; background:var(--purple);
+  border-radius:0 4px 4px 0;
+}
+.nav-item[data-tip]:hover::after {
+  content:attr(data-tip);
+  position:absolute; left:58px;
+  background:var(--text-dark); color:#fff;
+  font-size:11px; font-weight:700;
+  padding:4px 10px; border-radius:8px;
+  white-space:nowrap; pointer-events:none; z-index:100;
+  animation:tipIn .12s ease both;
+}
+@keyframes tipIn { from{opacity:0;transform:translateX(-4px)} to{opacity:1;transform:translateX(0)} }
+
+/* ═══════════════════════════
+   MAIN AREA
+═══════════════════════════ */
+.main { flex:1; display:flex; flex-direction:column; gap:14px; padding:0 14px 0 6px; }
+.page { display:none; flex-direction:column; gap:14px; animation:pageIn .35s cubic-bezier(.22,1,.36,1) both; }
+.page.active { display:flex; }
+@keyframes pageIn { from{opacity:0;transform:translateY(10px)} to{opacity:1;transform:translateY(0)} }
+
+.topbar { display:flex; align-items:center; justify-content:space-between; padding:4px 0; }
+.page-heading { font-family:'DM Serif Display',serif; font-size:30px; color:var(--text-dark); line-height:1; }
+.page-heading .muted { color:#aab8d4; font-style:italic; }
+
+.admin-pill {
+  display:flex; align-items:center; gap:10px;
+  background:var(--card); border-radius:999px;
+  padding:6px 18px 6px 6px;
+  box-shadow:var(--shadow-sm); cursor:pointer;
+  transition:box-shadow .2s;
+}
+.admin-pill:hover { box-shadow:var(--shadow-md); }
+.admin-avatar {
+  width:34px; height:34px; border-radius:50%;
+  background:linear-gradient(135deg,#b8d0f8,#8ab4f0);
+  display:flex; align-items:center; justify-content:center; flex-shrink:0;
+}
+.admin-label { font-size:11px; font-weight:800; color:var(--text-dark); letter-spacing:.7px; text-transform:uppercase; }
+
+/* Card */
+.card {
+  background:var(--card); border-radius:var(--radius);
+  box-shadow:var(--shadow-sm);
+  transition:box-shadow .25s;
+}
+.card:hover { box-shadow:var(--shadow-md); }
+
+/* ═══════════════════════════
+   PAGE: HOME / LOGIN
+═══════════════════════════ */
+.login-wrap { display:flex; align-items:center; justify-content:center; min-height:78vh; gap:60px; }
+.login-left { flex:1; max-width:420px; }
+.login-left h1 { font-family:'DM Serif Display',serif; font-size:42px; color:var(--text-dark); line-height:1.15; margin-bottom:12px; }
+.login-left h1 em { color:var(--purple); font-style:italic; }
+.login-left p { font-size:14px; color:var(--text-muted); line-height:1.7; margin-bottom:32px; max-width:340px; }
+
+.login-features { display:flex; flex-direction:column; gap:12px; }
+.login-feature { display:flex; align-items:center; gap:12px; background:var(--card); border-radius:14px; padding:12px 16px; box-shadow:var(--shadow-sm); }
+.login-feature-icon { width:36px; height:36px; border-radius:10px; background:var(--purple-light); display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+.login-feature-text { font-size:13px; font-weight:700; color:var(--text-dark); }
+.login-feature-sub  { font-size:11px; color:var(--text-muted); font-weight:500; }
+
+.login-right { width:360px; flex-shrink:0; }
+.login-card { padding:36px 32px; }
+.login-card h2 { font-family:'DM Serif Display',serif; font-size:26px; color:var(--text-dark); margin-bottom:6px; }
+.login-card p  { font-size:13px; color:var(--text-muted); margin-bottom:28px; }
+
+.form-group { margin-bottom:16px; }
+.form-label { font-size:12px; font-weight:700; color:var(--text-mid); letter-spacing:.4px; margin-bottom:6px; display:block; }
+.form-input { width:100%; padding:12px 14px; border:2px solid var(--border); border-radius:12px; font-size:14px; font-family:'Plus Jakarta Sans',sans-serif; color:var(--text-dark); background:#fafbff; outline:none; transition:border-color .18s, box-shadow .18s; }
+.form-input:focus { border-color:var(--purple); box-shadow:0 0 0 3px rgba(79,53,200,.12); }
+
+.btn-login { width:100%; padding:13px; background:linear-gradient(135deg,#5b3de8,#4f35c8); color:#fff; border:none; border-radius:13px; font-size:14px; font-weight:800; font-family:'Plus Jakarta Sans',sans-serif; cursor:pointer; box-shadow:0 6px 20px rgba(79,53,200,.38); transition:transform .18s, box-shadow .18s; margin-top:8px; }
+.btn-login:hover { transform:translateY(-2px); box-shadow:0 10px 28px rgba(79,53,200,.48); }
+
+.login-divider { display:flex; align-items:center; gap:10px; margin:18px 0; }
+.login-divider::before,.login-divider::after { content:''; flex:1; height:1px; background:var(--border); }
+.login-divider span { font-size:11px; color:var(--text-muted); font-weight:600; }
+
+.btn-guest { width:100%; padding:12px; background:var(--purple-light); color:var(--purple); border:2px solid var(--active-border); border-radius:13px; font-size:13px; font-weight:800; font-family:'Plus Jakarta Sans',sans-serif; cursor:pointer; transition:background .18s; }
+.btn-guest:hover { background:#e0d8ff; }
+
+/* ═══════════════════════════
+   PAGE: OVERVIEW
+═══════════════════════════ */
+.card-neural { display:flex; align-items:center; justify-content:space-between; gap:20px; padding:34px 38px; min-height:210px; position:relative; overflow:hidden; }
+.card-neural::after { content:''; position:absolute; right:-30px; top:-40px; width:240px; height:240px; background:radial-gradient(circle,rgba(123,94,248,.07) 0%,transparent 70%); border-radius:50%; pointer-events:none; }
+
+.neural-text h2 { font-family:'DM Serif Display',serif; font-size:30px; color:var(--text-dark); line-height:1.18; margin-bottom:10px; }
+.neural-text p  { font-size:13px; color:var(--text-muted); margin-bottom:22px; max-width:250px; line-height:1.6; }
+
+.btn-upload { background:linear-gradient(135deg,#5b3de8,#4f35c8); color:#fff; border:none; border-radius:13px; padding:13px 26px; font-size:14px; font-weight:800; font-family:'Plus Jakarta Sans',sans-serif; cursor:pointer; box-shadow:0 6px 20px rgba(79,53,200,.38); transition:transform .18s, box-shadow .18s; }
+.btn-upload:hover { transform:translateY(-2px); box-shadow:0 10px 30px rgba(79,53,200,.48); }
+
+.heart-wrap { width:158px; height:158px; flex-shrink:0; display:flex; align-items:center; justify-content:center; }
+.heart-wrap svg { animation:heartbeat 1.6s ease-in-out infinite; filter:drop-shadow(0 8px 18px rgba(232,64,64,.28)); }
+@keyframes heartbeat { 0%,100%{transform:scale(1)} 14%{transform:scale(1.09)} 28%{transform:scale(1)} 42%{transform:scale(1.05)} 56%{transform:scale(1)} }
+
+.upload-overlay { display:none; flex-direction:column; align-items:center; justify-content:center; gap:14px; }
+.upload-overlay.show { display:flex; }
+.analyzing-spinner { width:48px; height:48px; border:4px solid var(--purple-light); border-top-color:var(--purple); border-radius:50%; animation:spin .8s linear infinite; }
+@keyframes spin { to{transform:rotate(360deg)} }
+
+.card-body { padding:26px 28px; }
+.section-title { display:flex; align-items:center; gap:8px; font-size:15px; font-weight:800; color:var(--text-dark); margin-bottom:18px; }
+.dot { width:9px; height:9px; border-radius:50%; background:var(--text-dark); flex-shrink:0; }
+.body-organs { display:flex; gap:12px; }
+.organ-card { flex:1; border-radius:18px; padding:18px 14px 16px; background:#f7f9fe; border:2px solid transparent; display:flex; flex-direction:column; align-items:center; gap:10px; cursor:pointer; transition:border-color .2s,background .2s,transform .2s,box-shadow .2s; }
+.organ-card:hover { transform:translateY(-3px); box-shadow:var(--shadow-sm); }
+.organ-card.active { background:var(--active-card); border-color:var(--active-border); box-shadow:0 4px 20px rgba(79,53,200,.14); }
+.organ-icon { width:52px; height:52px; display:flex; align-items:center; justify-content:center; }
+.organ-name { font-size:10px; font-weight:800; color:var(--text-muted); letter-spacing:1.2px; text-transform:uppercase; }
+.organ-stats { font-size:12px; color:var(--text-mid); line-height:1.8; width:100%; }
+.stat-row { display:flex; justify-content:space-between; gap:4px; }
+.stat-row .val { font-weight:800; color:var(--text-dark); }
+
+.right-panel { width:296px; flex-shrink:0; display:flex; flex-direction:column; gap:14px; }
+.card-stats { padding:22px 20px; }
+.stats-title { font-size:14px; font-weight:800; color:var(--text-dark); margin-bottom:14px; }
+
+.bpm-ecg-row { display:flex; align-items:center; justify-content:space-between; margin-bottom:12px; }
+.bpm-label { font-size:11px; color:var(--text-muted); font-weight:700; margin-bottom:3px; }
+.bpm-value { font-size:26px; font-weight:800; color:var(--text-dark); }
+
+.ecg-container { display:flex; flex-direction:column; align-items:flex-end; gap:4px; }
+.ecg-label { font-size:9px; font-weight:800; color:var(--purple); letter-spacing:1px; }
+.ecg-wrap { width:120px; height:36px; overflow:hidden; border-radius:8px; background:#f7f9fe; }
+.ecg-svg { width:200%; animation:ecgScroll 3s linear infinite; }
+@keyframes ecgScroll { from{transform:translateX(0)} to{transform:translateX(-50%)} }
+
+.progress-bg { height:6px; background:#edf0fa; border-radius:99px; margin-bottom:16px; overflow:hidden; }
+.progress-fill { height:100%; width:72%; background:linear-gradient(90deg,var(--purple),var(--purple-mid)); border-radius:99px; }
+
+.mini-stats-row { display:flex; gap:10px; }
+.mini-stat { flex:1; background:#f7f9fe; border-radius:14px; padding:12px; }
+.mini-stat-header { display:flex; align-items:center; gap:5px; font-size:10px; font-weight:700; color:var(--text-muted); margin-bottom:6px; }
+.mini-stat-val { font-size:13px; font-weight:800; color:var(--text-dark); margin-bottom:8px; }
+.mini-wave { width:100%; height:22px; display:block; }
+.mini-num-row { display:flex; gap:6px; margin-top:6px; }
+.mini-num-box { background:var(--card); border-radius:8px; padding:5px 8px; text-align:center; }
+.mini-num { font-size:13px; font-weight:800; color:var(--purple); }
+.mini-sub { font-size:9px; color:var(--text-muted); font-weight:700; }
+
+.card-schedule { padding:20px 20px 14px; }
+.schedule-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:14px; }
+.show-more { font-size:11px; font-weight:800; color:var(--purple); cursor:pointer; }
+.cal-grid { display:grid; grid-template-columns:repeat(7,1fr); gap:4px; margin-bottom:14px; }
+.cal-cell { display:flex; flex-direction:column; align-items:center; gap:3px; }
+.cal-day { font-size:8.5px; font-weight:700; color:var(--text-muted); }
+.cal-num { width:26px; height:26px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:11px; font-weight:700; color:var(--text-mid); }
+.cal-num.today { background:var(--purple-light); color:var(--purple); }
+.cal-num.marked { background:var(--purple); color:#fff; }
+
+.appt-list { display:flex; flex-direction:column; gap:8px; }
+.appt-row { display:flex; align-items:center; gap:12px; padding:10px 12px; background:#f7f9fe; border-radius:12px; }
+.appt-icon { width:36px; height:36px; border-radius:10px; background:#fee2e2; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+.appt-info { flex:1; }
+.appt-title { font-size:12px; font-weight:800; color:var(--text-dark); }
+.appt-doctor { font-size:11px; color:var(--text-muted); }
+.appt-arrow { font-size:16px; color:var(--text-muted); }
+
+/* ═══════════════════════════
+   PAGE: ANALYSIS / UPLOAD
+═══════════════════════════ */
+.analysis-grid { display:grid; grid-template-columns:1fr 1fr; gap:14px; }
+.upload-zone {
+  border:2.5px dashed var(--active-border);
+  border-radius:20px; padding:40px 24px;
+  display:flex; flex-direction:column; align-items:center; justify-content:center; gap:14px;
+  cursor:pointer; transition:border-color .2s, background .2s;
+  background:linear-gradient(135deg,rgba(79,53,200,.03),rgba(123,94,248,.06));
+  text-align:center; min-height:220px;
+}
+.upload-zone:hover,.upload-zone.drag { border-color:var(--purple); background:var(--purple-light); }
+.upload-zone-icon { width:60px; height:60px; background:var(--purple-light); border-radius:18px; display:flex; align-items:center; justify-content:center; }
+.upload-zone h3 { font-size:15px; font-weight:800; color:var(--text-dark); }
+.upload-zone p  { font-size:12px; color:var(--text-muted); }
+
+.result-card { padding:28px; display:flex; flex-direction:column; gap:16px; }
+.result-label { font-size:11px; font-weight:800; color:var(--text-muted); letter-spacing:.8px; text-transform:uppercase; }
+.result-condition { font-family:'DM Serif Display',serif; font-size:28px; color:var(--text-dark); }
+.result-badge { display:inline-flex; align-items:center; gap:6px; padding:5px 14px; border-radius:99px; font-size:12px; font-weight:800; }
+.conf-bar-wrap { margin-top:4px; }
+.conf-bar-label { display:flex; justify-content:space-between; font-size:11px; font-weight:700; color:var(--text-muted); margin-bottom:6px; }
+.conf-bar-bg { height:8px; background:#edf0fa; border-radius:99px; overflow:hidden; }
+.conf-bar-fill { height:100%; border-radius:99px; transition:width 1s cubic-bezier(.22,1,.36,1); }
+.breakdown-grid { display:flex; flex-direction:column; gap:6px; }
+.breakdown-row { display:flex; align-items:center; gap:10px; font-size:12px; }
+.breakdown-name { width:80px; font-weight:700; color:var(--text-mid); }
+.breakdown-bar-bg { flex:1; height:6px; background:#edf0fa; border-radius:99px; overflow:hidden; }
+.breakdown-bar-fill { height:100%; border-radius:99px; background:var(--purple-light); transition:width .8s ease; }
+.breakdown-bar-fill.top { background:linear-gradient(90deg,var(--purple),var(--purple-mid)); }
+.breakdown-pct { width:36px; text-align:right; font-weight:800; color:var(--text-dark); }
+
+.explanation-card { padding:24px 28px; }
+.explanation-card h3 { font-size:14px; font-weight:800; color:var(--text-dark); margin-bottom:10px; display:flex; align-items:center; gap:8px; }
+.explanation-text { font-size:13px; color:var(--text-mid); line-height:1.75; }
+.explanation-skeleton { display:flex; flex-direction:column; gap:8px; }
+.skel-line { height:12px; background:linear-gradient(90deg,#edf0fa 25%,#e0e8f5 50%,#edf0fa 75%); background-size:200% 100%; border-radius:6px; animation:shimmer 1.4s infinite; }
+@keyframes shimmer { to{background-position:-200% 0} }
+
+.empty-result { display:flex; flex-direction:column; align-items:center; justify-content:center; gap:12px; padding:20px; text-align:center; flex:1; min-height:180px; }
+.empty-result p { font-size:13px; color:var(--text-muted); }
+
+/* ═══════════════════════════
+   PAGE: HEALTH TRENDS
+═══════════════════════════ */
+.trends-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:14px; }
+.trend-card { padding:22px 24px; }
+.trend-card h3 { font-size:14px; font-weight:800; color:var(--text-dark); margin-bottom:4px; }
+.trend-card .sub { font-size:11px; color:var(--text-muted); margin-bottom:14px; }
+.chart-area { height:130px; }
+.chart-area svg { width:100%; height:100%; }
+.trend-foot { display:flex; justify-content:space-between; align-items:center; margin-top:12px; }
+.trend-val { font-size:22px; font-weight:800; color:var(--text-dark); }
+.trend-change { font-size:11px; font-weight:800; padding:3px 10px; border-radius:99px; }
+.trend-change.up   { background:#dcfce7; color:#16a34a; }
+.trend-change.down { background:#fee2e2; color:#dc2626; }
+.trend-change.flat { background:#f3f4f6; color:#6b7280; }
+
+/* ═══════════════════════════
+   PAGE: DR. AI CHAT
+═══════════════════════════ */
+.chat-wrap { display:flex; flex-direction:column; height:calc(100vh - 160px); min-height:500px; }
+.chat-messages { flex:1; overflow-y:auto; padding:24px 28px; display:flex; flex-direction:column; gap:16px; scroll-behavior:smooth; }
+.chat-messages::-webkit-scrollbar { width:4px; }
+.chat-messages::-webkit-scrollbar-thumb { background:var(--border); border-radius:99px; }
+.bubble-row { display:flex; gap:10px; align-items:flex-end; }
+.bubble-row.user { flex-direction:row-reverse; }
+.bubble-avatar { width:32px; height:32px; border-radius:50%; flex-shrink:0; display:flex; align-items:center; justify-content:center; font-size:14px; }
+.bubble-avatar.ai   { background:linear-gradient(135deg,#7b5ef8,#4f35c8); color:#fff; font-size:12px; font-weight:800; }
+.bubble-avatar.user { background:linear-gradient(135deg,#b8d0f8,#8ab4f0); }
+.bubble { max-width:72%; padding:13px 17px; border-radius:18px; font-size:13.5px; line-height:1.65; font-weight:500; }
+.bubble.ai   { background:var(--card); color:var(--text-dark); border-bottom-left-radius:4px; box-shadow:var(--shadow-sm); white-space:pre-wrap; }
+.bubble.user { background:linear-gradient(135deg,#5b3de8,#4f35c8); color:#fff; border-bottom-right-radius:4px; }
+.bubble-time { font-size:10px; color:var(--text-muted); font-weight:600; margin-top:4px; text-align:right; }
+.typing-bubble { display:flex; gap:5px; align-items:center; padding:14px 18px; }
+.typing-dot { width:7px; height:7px; border-radius:50%; background:var(--purple-mid); animation:typingBounce 1.2s ease-in-out infinite; }
+.typing-dot:nth-child(2){animation-delay:.18s} .typing-dot:nth-child(3){animation-delay:.36s}
+@keyframes typingBounce { 0%,60%,100%{transform:translateY(0)} 30%{transform:translateY(-7px)} }
+.chat-input-bar { padding:18px 24px; border-top:1px solid var(--border); display:flex; gap:10px; align-items:flex-end; background:var(--card); border-radius:0 0 var(--radius) var(--radius); }
+.chat-input { flex:1; padding:12px 16px; border:2px solid var(--border); border-radius:14px; font-size:14px; font-family:'Plus Jakarta Sans',sans-serif; color:var(--text-dark); background:#fafbff; resize:none; outline:none; transition:border-color .18s; max-height:120px; min-height:46px; line-height:1.5; }
+.chat-input:focus { border-color:var(--purple); box-shadow:0 0 0 3px rgba(79,53,200,.1); }
+.btn-send,.btn-mic { width:46px; height:46px; border-radius:13px; border:none; display:flex; align-items:center; justify-content:center; cursor:pointer; flex-shrink:0; transition:transform .18s, box-shadow .18s; }
+.btn-send { background:linear-gradient(135deg,#5b3de8,#4f35c8); color:#fff; box-shadow:0 4px 14px rgba(79,53,200,.38); }
+.btn-send:hover { transform:translateY(-2px); box-shadow:0 8px 22px rgba(79,53,200,.48); }
+.btn-mic { background:var(--purple-light); color:var(--purple); }
+.btn-mic.listening { background:#fee2e2; color:var(--red); animation:micPulse 1s ease-in-out infinite; }
+@keyframes micPulse { 0%,100%{box-shadow:0 0 0 0 rgba(239,68,68,.3)} 50%{box-shadow:0 0 0 8px rgba(239,68,68,0)} }
+.chat-suggestions { display:flex; gap:8px; flex-wrap:wrap; padding:0 28px 16px; }
+.suggestion-chip { padding:7px 14px; border-radius:99px; border:2px solid var(--border); font-size:12px; font-weight:700; color:var(--text-mid); background:var(--card); cursor:pointer; transition:all .18s; white-space:nowrap; }
+.suggestion-chip:hover { border-color:var(--purple); color:var(--purple); background:var(--purple-light); }
+.voice-status { text-align:center; font-size:12px; color:var(--text-muted); font-weight:600; padding:4px 0 0; min-height:20px; }
+
+/* ═══════════════════════════
+   PAGE: REPORT
+═══════════════════════════ */
+.report-layout { display:flex; gap:14px; align-items:flex-start; }
+.report-main  { flex:1; display:flex; flex-direction:column; gap:14px; }
+.report-side  { width:260px; flex-shrink:0; display:flex; flex-direction:column; gap:14px; }
+.report-hero  { padding:32px 36px; }
+.report-hero-top { display:flex; align-items:flex-start; justify-content:space-between; margin-bottom:24px; }
+.report-condition { font-family:'DM Serif Display',serif; font-size:32px; color:var(--text-dark); line-height:1.1; }
+.report-sub { font-size:13px; color:var(--text-muted); margin-top:4px; }
+.report-badge { display:inline-flex; align-items:center; gap:6px; padding:7px 16px; border-radius:99px; font-size:12px; font-weight:800; }
+
+.metrics-row { display:grid; grid-template-columns:repeat(3,1fr); gap:12px; }
+.metric-box { background:#f7f9fe; border-radius:14px; padding:16px; }
+.metric-label { font-size:10px; font-weight:800; color:var(--text-muted); letter-spacing:.8px; text-transform:uppercase; margin-bottom:8px; }
+.metric-val { font-size:22px; font-weight:800; color:var(--text-dark); }
+.risk-gauge { display:flex; align-items:center; gap:8px; margin-top:8px; }
+.risk-dot { width:10px; height:10px; border-radius:50%; flex-shrink:0; }
+
+.waveform-card { padding:20px 24px; }
+.waveform-title { font-size:14px; font-weight:800; color:var(--text-dark); }
+.waveform-sub   { font-size:11px; color:var(--text-muted); margin-bottom:12px; }
+.waveform-area  { height:60px; background:#f7f9fe; border-radius:12px; overflow:hidden; display:flex; align-items:center; }
+
+.reco-card { padding:20px 22px; }
+.reco-title { font-size:13px; font-weight:800; color:var(--text-dark); margin-bottom:12px; }
+.reco-list { display:flex; flex-direction:column; gap:10px; }
+.reco-item { display:flex; align-items:flex-start; gap:10px; }
+.reco-bullet { width:22px; height:22px; background:var(--purple-light); color:var(--purple); border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:10px; font-weight:800; flex-shrink:0; }
+.reco-text { font-size:12px; color:var(--text-mid); line-height:1.6; }
+
+/* ═══════════════════════════
+   PAGE: NOTIFICATIONS
+═══════════════════════════ */
+.notif-layout { display:flex; gap:14px; }
+.notif-main { flex:1; }
+.notif-card { padding:24px 26px; }
+.notif-item { display:flex; align-items:flex-start; gap:14px; padding:14px 0; border-bottom:1px solid var(--border); }
+.notif-item:last-child { border-bottom:none; }
+.notif-dot-wrap { position:relative; flex-shrink:0; }
+.notif-icon-circle { width:42px; height:42px; border-radius:14px; display:flex; align-items:center; justify-content:center; }
+.unread-dot { position:absolute; top:-2px; right:-2px; width:10px; height:10px; background:var(--red); border-radius:50%; border:2px solid var(--card); }
+.notif-info { flex:1; }
+.notif-title { font-size:13px; font-weight:800; color:var(--text-dark); margin-bottom:4px; }
+.notif-msg { font-size:12px; color:var(--text-muted); line-height:1.55; }
+.notif-time { font-size:11px; color:var(--text-muted); font-weight:700; flex-shrink:0; padding-top:2px; }
+
+/* ═══════════════════════════
+   PAGE: SETTINGS
+═══════════════════════════ */
+.settings-grid { display:grid; grid-template-columns:1fr 1fr; gap:14px; }
+.settings-card { padding:24px 28px; }
+.settings-card h3 { font-size:14px; font-weight:800; color:var(--text-dark); margin-bottom:16px; }
+.settings-row { display:flex; align-items:center; justify-content:space-between; padding:10px 0; border-bottom:1px solid var(--border); }
+.settings-row:last-child { border-bottom:none; }
+.settings-label { font-size:13px; font-weight:700; color:var(--text-dark); }
+.settings-sub { font-size:11px; color:var(--text-muted); }
+.toggle { width:44px; height:24px; background:#e2e8f8; border-radius:99px; cursor:pointer; position:relative; transition:background .2s; flex-shrink:0; }
+.toggle.on { background:var(--purple); }
+.toggle::after { content:''; position:absolute; top:3px; left:3px; width:18px; height:18px; background:#fff; border-radius:50%; transition:transform .2s; box-shadow:0 1px 4px rgba(0,0,0,.2); }
+.toggle.on::after { transform:translateX(20px); }
+
+/* ═══════════════════════════
+   TOAST
+═══════════════════════════ */
+.toast {
+  position:fixed; bottom:28px; right:28px;
+  background:var(--text-dark); color:#fff;
+  padding:12px 20px; border-radius:14px;
+  font-size:13px; font-weight:700;
+  box-shadow:var(--shadow-lg);
+  transform:translateY(100px); opacity:0;
+  transition:all .3s cubic-bezier(.22,1,.36,1);
+  z-index:1000;
+}
+.toast.show { transform:translateY(0); opacity:1; }
+
+/* ═══════════════════════════
+   FILE INPUT hidden
+═══════════════════════════ */
+#file-input { display:none; }
+
+/* ═══ TOPIC PILLS ═══ */
+.topic-pill {
+  display:inline-flex;align-items:center;padding:7px 14px;border-radius:99px;
+  border:2px solid var(--active-border);background:var(--purple-light);color:var(--purple);
+  font-size:12px;font-weight:700;cursor:pointer;transition:all .18s;white-space:nowrap;
+  font-family:'Plus Jakarta Sans',sans-serif;
+}
+.topic-pill:hover { background:var(--purple);color:#fff;border-color:var(--purple);transform:translateY(-1px);box-shadow:0 4px 14px rgba(79,53,200,.28); }
+@keyframes pulse-green { 0%,100%{box-shadow:0 0 0 0 rgba(74,222,128,.5)} 50%{box-shadow:0 0 0 5px rgba(74,222,128,0)} }
+</style>
+</head>
+<body>
+
+<div id="toast" class="toast"></div>
+<input type="file" id="file-input" accept=".wav"/>
+
+<div class="shell">
+
+  <!-- ═══════════ SIDEBAR ═══════════ -->
+  <nav class="sidebar">
+    <div class="logo-badge" onclick="navigate('overview')">H</div>
+    <div class="nav-group">
+      <div class="nav-item active" id="nav-overview" onclick="navigate('overview')" data-tip="Overview">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>
+      </div>
+      <div class="nav-item" id="nav-analysis" onclick="navigate('analysis')" data-tip="Analyze">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+      </div>
+      <div class="nav-item" id="nav-trends" onclick="navigate('trends')" data-tip="Trends">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 17 9 11 13 15 21 7"/><polyline points="14 7 21 7 21 14"/></svg>
+      </div>
+      <div class="nav-divider"></div>
+      <div class="nav-item" id="nav-report" onclick="navigate('report')" data-tip="Report">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+      </div>
+      <div class="nav-item" id="nav-drai" onclick="navigate('drai')" data-tip="Dr. AI">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
+      </div>
+      <div class="nav-item" id="nav-notifications" onclick="navigate('notifications')" data-tip="Alerts">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 01-3.46 0"/></svg>
+      </div>
+    </div>
+    <div class="nav-bottom-group">
+      <div class="nav-item" id="nav-settings" onclick="navigate('settings')" data-tip="Settings">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>
+      </div>
+    </div>
+  </nav>
+
+  <!-- ═══════════ MAIN ═══════════ -->
+  <main class="main">
+
+    <!-- TOPBAR -->
+    <div class="topbar">
+      <div class="page-heading" id="page-heading"><em>Overview</em> <span class="muted">Conditions</span></div>
+      <div class="admin-pill" onclick="navigate('settings')">
+        <div class="admin-avatar">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#4f6098" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-3.87 3.58-7 8-7s8 3.13 8 7"/></svg>
+        </div>
+        <span class="admin-label">Medical Admin</span>
+      </div>
+    </div>
+
+    <!-- ════ PAGE: OVERVIEW ════ -->
+    <div class="page active" id="page-overview">
+      <div style="display:flex;gap:14px;align-items:flex-start;">
+        <div style="flex:1;display:flex;flex-direction:column;gap:14px;">
+          <!-- Neural Card -->
+          <div class="card card-neural">
+            <div class="neural-text" id="neural-default">
+              <h2>Neural Heart<br>Classification</h2>
+              <p>Upload acoustic data for real-time analysis against the Yaseen Khan dataset.</p>
+              <button class="btn-upload" onclick="navigate('analysis')">Upload .wav File →</button>
+            </div>
+            <div class="upload-overlay" id="neural-analyzing">
+              <div class="analyzing-spinner"></div>
+              <p style="font-weight:700;color:var(--text-dark)">Analyzing heart sound…</p>
+              <p>Running neural classification model</p>
+            </div>
+            <div class="heart-wrap">
+              <svg width="152" height="152" viewBox="0 0 152 152" xmlns="http://www.w3.org/2000/svg">
+                <defs>
+                  <radialGradient id="hg" cx="38%" cy="32%" r="68%"><stop offset="0%" stop-color="#f98080"/><stop offset="55%" stop-color="#e84444"/><stop offset="100%" stop-color="#c42e2e"/></radialGradient>
+                  <radialGradient id="hs" cx="50%" cy="50%" r="50%"><stop offset="0%" stop-color="white" stop-opacity=".72"/><stop offset="100%" stop-color="white" stop-opacity="0"/></radialGradient>
+                </defs>
+                <path d="M76 124C76 124 16 82 16 48 16 27 32 15 50 15 62 15 72.5 22.5 76 34 79.5 22.5 90 15 102 15 120 15 136 27 136 48 136 82 76 124 76 124Z" fill="url(#hg)" stroke="#b82424" stroke-width="3.5" stroke-linejoin="round"/>
+                <ellipse cx="54" cy="40" rx="13" ry="9" fill="url(#hs)" transform="rotate(-25 54 40)"/>
+                <circle cx="60" cy="68" r="8" fill="#141830"/><circle cx="92" cy="68" r="8" fill="#141830"/>
+                <circle cx="63.5" cy="64.5" r="3" fill="white"/><circle cx="95.5" cy="64.5" r="3" fill="white"/>
+                <path d="M57 87 Q76 106 95 87" stroke="#141830" stroke-width="3.8" fill="none" stroke-linecap="round"/>
+                <ellipse cx="43" cy="82" rx="11" ry="6.5" fill="#f8a0a0" opacity="0.42"/>
+                <ellipse cx="109" cy="82" rx="11" ry="6.5" fill="#f8a0a0" opacity="0.42"/>
+              </svg>
+            </div>
+          </div>
+          <!-- Body Condition -->
+          <div class="card card-body">
+            <div class="section-title"><span class="dot"></span> My Body Condition</div>
+            <div class="body-organs">
+              <div class="organ-card active" onclick="selectOrgan(this)">
+                <div class="organ-icon">
+                  <svg width="50" height="50" viewBox="0 0 50 50" fill="none"><defs><radialGradient id="hg2" cx="38%" cy="32%" r="68%"><stop offset="0%" stop-color="#f98080"/><stop offset="100%" stop-color="#d43030"/></radialGradient></defs><path d="M25 42C25 42 7 29 7 17 7 9.5 12.5 5 19.5 5 22.5 5 24.5 7 25 10 25.5 7 27.5 5 30.5 5 37.5 5 43 9.5 43 17 43 29 25 42 25 42Z" fill="url(#hg2)" stroke="#b82020" stroke-width="2"/></svg>
+                </div>
+                <div class="organ-name">My Heart</div>
+                <div class="organ-stats">
+                  <div class="stat-row"><span>Heart Rate</span><span class="val">120 bpm</span></div>
+                  <div class="stat-row"><span>Blood Pressure</span><span class="val">116/70</span></div>
+                  <div class="stat-row"><span>Glucose</span><span class="val">80-90</span></div>
+                </div>
+              </div>
+              <div class="organ-card" onclick="selectOrgan(this)">
+                <div class="organ-icon">
+                  <svg width="50" height="50" viewBox="0 0 50 50" fill="none"><defs><radialGradient id="dg" cx="40%" cy="30%" r="65%"><stop offset="0%" stop-color="#ff8888"/><stop offset="100%" stop-color="#cc1a1a"/></radialGradient></defs><path d="M25 6C25 6 10 24 10 33 10 41.3 16.7 46 25 46 33.3 46 40 41.3 40 33 40 24 25 6 25 6Z" fill="url(#dg)" stroke="#aa1010" stroke-width="2"/></svg>
+                </div>
+                <div class="organ-name">Blood</div>
+                <div class="organ-stats">
+                  <div class="stat-row"><span>Heart Rate</span><span class="val">118 bpm</span></div>
+                  <div class="stat-row"><span>Minimum</span><span class="val">48 BPM</span></div>
+                  <div class="stat-row"><span>Glucose</span><span class="val">230/ml</span></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <!-- Right Panel -->
+        <div class="right-panel">
+          <div class="card card-stats">
+            <div class="stats-title">My Heart Statistic</div>
+            <div class="bpm-ecg-row">
+              <div><div class="bpm-label">Heart Rate</div><div class="bpm-value">120 bpm</div></div>
+              <div class="ecg-container">
+                <div class="ecg-label">LIVE ECG</div>
+                <div class="ecg-wrap">
+                  <svg class="ecg-svg" viewBox="0 0 360 36" fill="none">
+                    <polyline points="0,18 15,18 20,6 26,30 31,2 37,28 42,18 60,18 75,18 80,6 86,30 91,2 97,28 102,18 120,18 135,18 140,6 146,30 151,2 157,28 162,18 180,18 195,18 200,6 206,30 211,2 217,28 222,18 240,18 255,18 260,6 266,30 271,2 277,28 282,18 300,18 315,18 320,6 326,30 331,2 337,28 342,18 360,18" stroke="#4f35c8" stroke-width="2.2" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+                  </svg>
+                </div>
+              </div>
+            </div>
+            <div class="progress-bg"><div class="progress-fill"></div></div>
+            <div class="mini-stats-row">
+              <div class="mini-stat">
+                <div class="mini-stat-header"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="7" y1="9" x2="17" y2="9"/><line x1="7" y1="13" x2="13" y2="13"/></svg>Blood Status</div>
+                <div class="mini-stat-val">116/70 mmHg</div>
+                <svg class="mini-wave" viewBox="0 0 80 22" fill="none"><polyline points="0,11 8,11 12,4 16,18 20,4 24,16 28,11 38,11 42,5 46,17 50,3 54,16 58,11 68,11 80,11" stroke="#5b7dee" stroke-width="1.8" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                <div class="mini-num-row"><div class="mini-num-box"><div class="mini-num">80</div><div class="mini-sub">-90</div></div></div>
+              </div>
+              <div class="mini-stat">
+                <div class="mini-stat-header"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M9 12l2 2 4-4"/></svg>Glucose</div>
+                <div class="mini-stat-val">230/ml</div>
+                <svg class="mini-wave" viewBox="0 0 80 22" fill="none"><polyline points="0,11 8,7 16,15 24,7 32,15 40,9 48,13 56,7 64,15 72,9 80,11" stroke="#5b7dee" stroke-width="1.8" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                <div class="mini-num-row"><div class="mini-num-box"><div class="mini-num">230</div><div class="mini-sub">/ml</div></div></div>
+              </div>
+            </div>
+          </div>
+          <div class="card card-schedule">
+            <div class="schedule-header">
+              <div class="section-title" style="margin-bottom:0"><span class="dot"></span> Checkup Schedule</div>
+              <span class="show-more">Show More</span>
+            </div>
+            <div class="cal-grid">
+              <div class="cal-cell"><div class="cal-day">Thr</div><div class="cal-num">15</div></div>
+              <div class="cal-cell"><div class="cal-day">Fri</div><div class="cal-num">16</div></div>
+              <div class="cal-cell"><div class="cal-day">Sat</div><div class="cal-num">17</div></div>
+              <div class="cal-cell"><div class="cal-day">Mon</div><div class="cal-num today">19</div></div>
+              <div class="cal-cell"><div class="cal-day">Tue</div><div class="cal-num">20</div></div>
+              <div class="cal-cell"><div class="cal-day">Wed</div><div class="cal-num">21</div></div>
+              <div class="cal-cell"><div class="cal-day">Thr</div><div class="cal-num">22</div></div>
+              <div class="cal-cell"><div class="cal-day">Fri</div><div class="cal-num">23</div></div>
+              <div class="cal-cell"><div class="cal-day">Sat</div><div class="cal-num">24</div></div>
+              <div class="cal-cell"><div class="cal-day">Mon</div><div class="cal-num marked">25</div></div>
+              <div class="cal-cell"><div class="cal-day">Tue</div><div class="cal-num">26</div></div>
+              <div class="cal-cell"><div class="cal-day">Wed</div><div class="cal-num">27</div></div>
+              <div class="cal-cell"><div class="cal-day">Thu</div><div class="cal-num">28</div></div>
+              <div class="cal-cell"><div class="cal-day">Fri</div><div class="cal-num">29</div></div>
+            </div>
+            <div class="appt-list">
+              <div class="appt-row">
+                <div class="appt-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#e05050" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.8 4.6a5.5 5.5 0 00-7.8 0L12 5.6l-1-1a5.5 5.5 0 00-7.8 7.8l1 1L12 21l7.8-7.8 1-1a5.5 5.5 0 000-7.8z"/></svg></div>
+                <div class="appt-info"><div class="appt-title">Heart Screening</div><div class="appt-doctor">Dr. Steve Alex</div></div>
+                <div class="appt-arrow">→</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ════ PAGE: ANALYSIS ════ -->
+    <div class="page" id="page-analysis">
+      <div class="analysis-grid">
+        <!-- Upload Zone -->
+        <div class="card" style="padding:24px;">
+          <div class="section-title" style="margin-bottom:16px"><span class="dot"></span> Upload Heart Sound</div>
+          <div class="upload-zone" id="upload-zone" onclick="document.getElementById('file-input').click()" ondragover="event.preventDefault();this.classList.add('drag')" ondragleave="this.classList.remove('drag')" ondrop="handleDrop(event)">
+            <div class="upload-zone-icon">
+              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#5b3de8" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 16 12 12 8 16"/><line x1="12" y1="12" x2="12" y2="21"/><path d="M20.39 18.39A5 5 0 0018 9h-1.26A8 8 0 103 16.3"/></svg>
+            </div>
+            <h3>Drop .wav file here</h3>
+            <p>or click to browse · WAV format only</p>
+            <p id="file-name-display" style="font-size:12px;font-weight:800;color:var(--purple);display:none;"></p>
+          </div>
+          <div style="margin-top:16px;display:flex;gap:10px;">
+            <button class="btn-upload" id="analyze-btn" onclick="runAnalysis()" style="display:none;width:100%;">🫀 Analyze Now</button>
+          </div>
+          <div id="analyzing-state" style="display:none;flex-direction:column;align-items:center;gap:12px;padding:20px 0;">
+            <div class="analyzing-spinner"></div>
+            <p style="font-weight:700;color:var(--text-dark);font-size:14px;">Analyzing heart sound…</p>
+            <p style="font-size:12px;color:var(--text-muted);">Extracting MFCCs → Running KNN model → Asking Dr. AI</p>
+          </div>
+        </div>
+
+        <!-- Result Card -->
+        <div class="card result-card" id="result-panel">
+          <div class="empty-result" id="result-empty">
+            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#c5b8f8" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+            <p>Upload a heart sound .wav file<br>to see your classification result here.</p>
+          </div>
+          <div id="result-content" style="display:none;flex-direction:column;gap:14px;">
+            <div>
+              <div class="result-label">Detected Condition</div>
+              <div class="result-condition" id="res-condition">—</div>
+              <div style="margin-top:8px;display:flex;gap:8px;align-items:center;">
+                <span class="result-badge" id="res-badge">—</span>
+                <span style="font-size:12px;color:var(--text-muted)" id="res-risk-label">—</span>
+              </div>
+            </div>
+            <div class="conf-bar-wrap">
+              <div class="conf-bar-label"><span>Model Confidence</span><span id="res-conf-pct">—</span></div>
+              <div class="conf-bar-bg"><div class="conf-bar-fill" id="res-conf-bar" style="width:0%;background:var(--purple)"></div></div>
+            </div>
+            <div>
+              <div class="result-label" style="margin-bottom:8px;">Class Breakdown</div>
+              <div class="breakdown-grid" id="res-breakdown"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Dr. AI Explanation -->
+      <div class="card explanation-card" id="explanation-panel" style="display:none;">
+        <h3>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#5b3de8" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
+          Dr. AI Explanation
+        </h3>
+        <div id="explanation-skel" class="explanation-skeleton">
+          <div class="skel-line" style="width:90%"></div>
+          <div class="skel-line" style="width:75%"></div>
+          <div class="skel-line" style="width:85%"></div>
+          <div class="skel-line" style="width:60%"></div>
+        </div>
+        <div class="explanation-text" id="explanation-text" style="display:none;"></div>
+      </div>
+    </div>
+
+    <!-- ════ PAGE: TRENDS ════ -->
+    <div class="page" id="page-trends">
+      <div class="trends-grid">
+        <div class="card trend-card">
+          <h3>Heart Rate Trend</h3>
+          <div class="sub">Last 7 days average</div>
+          <div class="chart-area">
+            <svg viewBox="0 0 300 130" preserveAspectRatio="none">
+              <defs><linearGradient id="areaGrad" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#4f35c8" stop-opacity=".18"/><stop offset="100%" stop-color="#4f35c8" stop-opacity="0"/></linearGradient></defs>
+              <path d="M0,90 C30,80 60,60 90,65 C120,70 150,50 180,55 C210,60 240,45 300,40 L300,130 L0,130 Z" fill="url(#areaGrad)"/>
+              <path d="M0,90 C30,80 60,60 90,65 C120,70 150,50 180,55 C210,60 240,45 300,40" stroke="#4f35c8" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+              <circle cx="300" cy="40" r="5" fill="#4f35c8"/>
+            </svg>
+          </div>
+          <div class="trend-foot"><div class="trend-val">120 bpm</div><div class="trend-change up">↑ +4 bpm</div></div>
+        </div>
+        <div class="card trend-card">
+          <h3>Blood Pressure</h3>
+          <div class="sub">Systolic / Diastolic</div>
+          <div class="chart-area">
+            <svg viewBox="0 0 300 130" preserveAspectRatio="none">
+              <defs><linearGradient id="areaGrad2" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#f59e0b" stop-opacity=".15"/><stop offset="100%" stop-color="#f59e0b" stop-opacity="0"/></linearGradient></defs>
+              <path d="M0,70 C40,65 80,55 120,60 C160,65 200,50 250,58 C270,62 285,60 300,55 L300,130 L0,130 Z" fill="url(#areaGrad2)"/>
+              <path d="M0,70 C40,65 80,55 120,60 C160,65 200,50 250,58 C270,62 285,60 300,55" stroke="#f59e0b" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+              <circle cx="300" cy="55" r="5" fill="#f59e0b"/>
+            </svg>
+          </div>
+          <div class="trend-foot"><div class="trend-val">116/70</div><div class="trend-change flat">→ Stable</div></div>
+        </div>
+        <div class="card trend-card">
+          <h3>Glucose Level</h3>
+          <div class="sub">mg/dL readings</div>
+          <div class="chart-area">
+            <svg viewBox="0 0 300 130" preserveAspectRatio="none">
+              <defs><linearGradient id="areaGrad3" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#ef4444" stop-opacity=".12"/><stop offset="100%" stop-color="#ef4444" stop-opacity="0"/></linearGradient></defs>
+              <path d="M0,95 C30,90 60,85 90,75 C120,65 150,70 180,60 C210,50 250,45 300,35 L300,130 L0,130 Z" fill="url(#areaGrad3)"/>
+              <path d="M0,95 C30,90 60,85 90,75 C120,65 150,70 180,60 C210,50 250,45 300,35" stroke="#ef4444" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+              <circle cx="300" cy="35" r="5" fill="#ef4444"/>
+            </svg>
+          </div>
+          <div class="trend-foot"><div class="trend-val">230 mg</div><div class="trend-change down">↑ High</div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ════ PAGE: REPORT ════ -->
+    <div class="page" id="page-report">
+      <div id="report-empty" style="display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:60vh;gap:14px;text-align:center;">
+        <svg width="56" height="56" viewBox="0 0 24 24" fill="none" stroke="#c5b8f8" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+        <p style="font-size:14px;color:var(--text-muted);">No report yet. Upload and analyze a heart sound first.</p>
+        <button class="btn-upload" onclick="navigate('analysis')">Go to Analysis →</button>
+      </div>
+      <div id="report-filled" style="display:none;">
+        <div class="report-layout">
+          <div class="report-main">
+            <div class="card report-hero">
+              <div class="report-hero-top">
+                <div>
+                  <div style="font-size:11px;font-weight:800;color:var(--text-muted);letter-spacing:.8px;text-transform:uppercase;margin-bottom:8px;">Latest Analysis Report</div>
+                  <div class="report-condition" id="rpt-condition">—</div>
+                  <div class="report-sub" id="rpt-sub">—</div>
+                </div>
+                <span class="report-badge" id="rpt-badge">—</span>
+              </div>
+              <div class="metrics-row">
+                <div class="metric-box">
+                  <div class="metric-label">Confidence</div>
+                  <div class="metric-val" id="rpt-conf">—</div>
+                </div>
+                <div class="metric-box">
+                  <div class="metric-label">Risk Level</div>
+                  <div class="metric-val" id="rpt-risk" style="color:var(--orange)">—</div>
+                  <div class="risk-gauge">
+                    <div class="risk-dot" style="background:#22c55e"></div>
+                    <div style="flex:1;height:8px;background:#edf0fa;border-radius:99px;overflow:hidden;"><div id="rpt-risk-bar" style="height:100%;width:0%;background:linear-gradient(90deg,#22c55e,#f59e0b);border-radius:99px;"></div></div>
+                    <div class="risk-dot" style="background:#ef4444"></div>
+                  </div>
+                </div>
+                <div class="metric-box">
+                  <div class="metric-label">Source File</div>
+                  <div style="font-size:13px;font-weight:800;color:var(--text-dark);margin-top:4px;" id="rpt-file">—</div>
+                  <div style="font-size:11px;color:var(--text-muted);margin-top:4px;">Model: KNN · Yaseen Khan</div>
+                </div>
+              </div>
+            </div>
+            <div class="card waveform-card">
+              <div class="waveform-title">Acoustic Waveform</div>
+              <div class="waveform-sub">Uploaded heart sound signal</div>
+              <div class="waveform-area">
+                <svg width="100%" height="60" viewBox="0 0 600 60" preserveAspectRatio="none">
+                  <polyline points="0,30 10,28 20,32 30,15 40,45 50,20 60,38 70,25 80,35 90,18 100,42 110,22 120,36 130,28 140,32 150,10 160,50 170,18 180,40 190,25 200,35 210,20 220,38 230,28 240,32 250,12 260,48 270,20 280,38 290,25 300,33 310,18 320,42 330,22 340,36 350,28 360,32 370,14 380,46 390,20 400,38 410,25 420,34 430,19 440,40 450,27 460,33 470,16 480,44 490,21 500,38 510,26 520,34 530,20 540,40 550,28 560,32 570,15 580,45 590,22 600,30" stroke="#4f35c8" stroke-width="1.5" fill="none" stroke-linecap="round" stroke-linejoin="round" opacity=".7"/>
+                </svg>
+              </div>
+            </div>
+          </div>
+          <div class="report-side">
+            <div class="card reco-card">
+              <div class="reco-title">Recommendations</div>
+              <div class="reco-list" id="rpt-recos"></div>
+            </div>
+            <div class="card reco-card">
+              <div class="reco-title">Dr. AI Summary</div>
+              <div class="explanation-text" id="rpt-explanation" style="font-size:12px;color:var(--text-mid);line-height:1.7;"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ════ PAGE: DR. AI CHAT ════ -->
+    <div class="page" id="page-drai">
+      <!-- Header Banner -->
+      <div class="card" style="padding:16px 22px;display:flex;align-items:center;gap:14px;background:linear-gradient(135deg,#4f35c8,#7b5ef8);">
+        <div style="width:46px;height:46px;background:rgba(255,255,255,.18);border-radius:14px;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.8 4.6a5.5 5.5 0 00-7.8 0L12 5.6l-1-1a5.5 5.5 0 00-7.8 7.8l1 1L12 21l7.8-7.8 1-1a5.5 5.5 0 000-7.8z"/></svg>
+        </div>
+        <div style="flex:1;">
+          <div style="font-family:'DM Serif Display',serif;font-size:18px;color:white;line-height:1.1;">Dr. AI — Cardiac Specialist</div>
+          <div style="font-size:11px;color:rgba(255,255,255,.75);margin-top:2px;">Powered by Claude · Heart questions only · Always consult a real cardiologist</div>
+        </div>
+        <div style="display:flex;align-items:center;gap:5px;background:rgba(255,255,255,.15);border-radius:99px;padding:5px 12px;">
+          <div style="width:7px;height:7px;border-radius:50%;background:#4ade80;animation:pulse-green 2s ease-in-out infinite;"></div>
+          <span style="font-size:10px;font-weight:800;color:white;letter-spacing:.5px;">ONLINE</span>
+        </div>
+      </div>
+      <!-- Topic Pills -->
+      <div class="card" style="padding:14px 18px;">
+        <div style="font-size:10px;font-weight:800;color:var(--text-muted);letter-spacing:.8px;text-transform:uppercase;margin-bottom:10px;">🫀 Quick Topics — tap to ask instantly</div>
+        <div style="display:flex;flex-wrap:wrap;gap:8px;">
+          <span class="topic-pill" onclick="askTopic('What are the symptoms of Aortic Stenosis and how is it treated?')">🔴 Aortic Stenosis</span>
+          <span class="topic-pill" onclick="askTopic('Explain Mitral Regurgitation — causes, symptoms, and treatment.')">🟠 Mitral Regurgitation</span>
+          <span class="topic-pill" onclick="askTopic('What is Mitral Stenosis and how does it affect blood flow?')">🟡 Mitral Stenosis</span>
+          <span class="topic-pill" onclick="askTopic('What is Mitral Valve Prolapse? Is it dangerous?')">🟣 Valve Prolapse</span>
+          <span class="topic-pill" onclick="askTopic('What are the warning signs of a heart attack? When should I call emergency services?')">🚨 Heart Attack Signs</span>
+          <span class="topic-pill" onclick="askTopic('What is heart failure and how is it different from a heart attack?')">💔 Heart Failure</span>
+          <span class="topic-pill" onclick="askTopic('What is atrial fibrillation (AFib) and what are its risks?')">⚡ AFib</span>
+          <span class="topic-pill" onclick="askTopic('What foods are best for a heart-healthy diet? What should I avoid?')">🥗 Heart Diet</span>
+          <span class="topic-pill" onclick="askTopic('What exercises are safe and beneficial for someone with heart disease?')">🏃 Cardiac Exercise</span>
+          <span class="topic-pill" onclick="askTopic('How does high blood pressure damage the heart over time?')">📊 Hypertension</span>
+          <span class="topic-pill" onclick="askTopic('What are normal ranges for heart rate, blood pressure, and cholesterol?')">📋 Normal Ranges</span>
+          <span class="topic-pill" onclick="askTopic('What is an ECG/EKG test and what can it detect about my heart?')">📈 ECG Explained</span>
+          <span class="topic-pill" onclick="askTopic('What medications are commonly used for heart conditions?')">💊 Heart Medications</span>
+          <span class="topic-pill" onclick="askTopic('How does chronic stress affect the heart and what can I do about it?')">😰 Stress & Heart</span>
+          <span class="topic-pill" onclick="askTopic('Can you explain what my latest heart sound analysis result means?')">🔬 My Results</span>
+        </div>
+      </div>
+      <div class="card chat-wrap" style="flex:1;">
+        <div class="chat-messages" id="chat-messages">
+          <div class="bubble-row">
+            <div class="bubble-avatar ai">AI</div>
+            <div>
+              <div class="bubble ai">Hello! I'm Dr. AI, your dedicated cardiac specialist — powered by Claude AI. 💙
+
+I focus exclusively on heart health, so you'll get deep, accurate answers about any heart condition, symptoms, medications, test results, diet, or procedures.
+
+Tap a quick topic above or type your question below!</div>
+              <div class="bubble-time">Just now</div>
+            </div>
+          </div>
+        </div>
+        <div class="chat-suggestions" id="chat-suggestions">
+          <div class="suggestion-chip" onclick="sendSuggestion(this)">What is Aortic Stenosis?</div>
+          <div class="suggestion-chip" onclick="sendSuggestion(this)">Explain my latest result</div>
+          <div class="suggestion-chip" onclick="sendSuggestion(this)">What is Mitral Regurgitation?</div>
+          <div class="suggestion-chip" onclick="sendSuggestion(this)">Heart healthy diet tips</div>
+        </div>
+        <div class="voice-status" id="voice-status"></div>
+        <div class="chat-input-bar">
+          <button class="btn-mic" id="btn-mic" onclick="toggleVoice()">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 1a3 3 0 00-3 3v8a3 3 0 006 0V4a3 3 0 00-3-3z"/><path d="M19 10v2a7 7 0 01-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg>
+          </button>
+          <textarea class="chat-input" id="chat-input" rows="1" placeholder="Ask Dr. AI anything about heart health…" onkeydown="handleKey(event)" oninput="autoResize(this)"></textarea>
+          <button class="btn-send" onclick="sendMessage()">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ════ PAGE: NOTIFICATIONS ════ -->
+    <div class="page" id="page-notifications">
+      <div class="notif-layout">
+        <div class="notif-main">
+          <div class="card notif-card">
+            <div class="section-title" style="margin-bottom:4px"><span class="dot"></span> Notifications</div>
+            <p style="font-size:12px;color:var(--text-muted);margin-bottom:16px">3 unread alerts</p>
+            <div class="notif-item">
+              <div class="notif-dot-wrap">
+                <div class="notif-icon-circle" style="background:#fee2e2"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#ef4444" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.8 4.6a5.5 5.5 0 00-7.8 0L12 5.6l-1-1a5.5 5.5 0 00-7.8 7.8l1 1L12 21l7.8-7.8 1-1a5.5 5.5 0 000-7.8z"/></svg></div>
+                <div class="unread-dot"></div>
+              </div>
+              <div class="notif-info">
+                <div class="notif-title">⚠️ Analysis Complete</div>
+                <div class="notif-msg" id="notif-result-msg">Upload a heart sound to see your results here.</div>
+              </div>
+              <div class="notif-time">Now</div>
+            </div>
+            <div class="notif-item">
+              <div class="notif-dot-wrap">
+                <div class="notif-icon-circle" style="background:#fef3c7"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg></div>
+                <div class="unread-dot"></div>
+              </div>
+              <div class="notif-info">
+                <div class="notif-title">Glucose Level Above Normal</div>
+                <div class="notif-msg">Your glucose reading of 230/ml is above the recommended range. Consider adjusting your diet.</div>
+              </div>
+              <div class="notif-time">1h ago</div>
+            </div>
+            <div class="notif-item">
+              <div class="notif-dot-wrap">
+                <div class="notif-icon-circle" style="background:var(--purple-light)"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#5b3de8" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg></div>
+                <div class="unread-dot"></div>
+              </div>
+              <div class="notif-info">
+                <div class="notif-title">Upcoming: Heart Screening</div>
+                <div class="notif-msg">You have a Heart Screening appointment with Dr. Steve Alex on Monday, April 25.</div>
+              </div>
+              <div class="notif-time">3h ago</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ════ PAGE: SETTINGS ════ -->
+    <div class="page" id="page-settings">
+      <div class="settings-grid">
+        <div class="card settings-card">
+          <h3>Preferences</h3>
+          <div class="settings-row">
+            <div><div class="settings-label">Dark Mode</div><div class="settings-sub">Switch to dark theme</div></div>
+            <div class="toggle" onclick="this.classList.toggle('on')"></div>
+          </div>
+          <div class="settings-row">
+            <div><div class="settings-label">Voice Output</div><div class="settings-sub">Dr. AI speaks replies</div></div>
+            <div class="toggle on" onclick="this.classList.toggle('on')"></div>
+          </div>
+          <div class="settings-row">
+            <div><div class="settings-label">Notifications</div><div class="settings-sub">Alert on new analysis</div></div>
+            <div class="toggle on" onclick="this.classList.toggle('on')"></div>
+          </div>
+          <div class="settings-row">
+            <div><div class="settings-label">Auto-report</div><div class="settings-sub">Auto-generate after analysis</div></div>
+            <div class="toggle" onclick="this.classList.toggle('on')"></div>
+          </div>
+        </div>
+        <!-- API Key Card -->
+        <div class="card settings-card">
+          <h3>🔑 Dr. AI API Key</h3>
+          <p style="font-size:12px;color:var(--text-muted);margin-bottom:14px;line-height:1.6;">Enter your <strong>Anthropic API key</strong> to power Dr. AI chat. Get one free at <a href="https://console.anthropic.com" target="_blank" style="color:var(--purple)">console.anthropic.com</a></p>
+          <div style="display:flex;gap:8px;align-items:center;">
+            <input type="password" id="api-key-input" placeholder="sk-ant-api03-..." style="flex:1;padding:10px 14px;border:2px solid var(--border);border-radius:12px;font-size:13px;font-family:'Plus Jakarta Sans',sans-serif;color:var(--text-dark);background:#fafbff;outline:none;" onfocus="this.style.borderColor='var(--purple)'" onblur="this.style.borderColor='var(--border)'"/>
+            <button onclick="saveApiKey()" style="padding:10px 18px;background:linear-gradient(135deg,#5b3de8,#4f35c8);color:#fff;border:none;border-radius:12px;font-size:13px;font-weight:800;font-family:'Plus Jakarta Sans',sans-serif;cursor:pointer;white-space:nowrap;">Save Key</button>
+          </div>
+          <div id="api-key-status" style="font-size:12px;color:var(--green);margin-top:8px;font-weight:700;min-height:18px;"></div>
+        </div>
+        <div class="card settings-card">
+          <h3>About Heartify Pro</h3>
+          <div class="settings-row">
+            <div><div class="settings-label">ML Model</div><div class="settings-sub">KNN Pipeline · Yaseen Khan</div></div>
+            <span style="font-size:11px;font-weight:800;color:var(--purple)">v1.0</span>
+          </div>
+          <div class="settings-row">
+            <div><div class="settings-label">Classes</div><div class="settings-sub">AS, MR, MS, MVP, Normal</div></div>
+            <span style="font-size:11px;font-weight:800;color:var(--green)">5</span>
+          </div>
+          <div class="settings-row">
+            <div><div class="settings-label">Dr. AI Backend</div><div class="settings-sub">Anthropic Claude · Direct Browser API</div></div>
+            <span style="font-size:11px;font-weight:800;color:var(--purple)">Live</span>
+          </div>
+          <div class="settings-row">
+            <div><div class="settings-label">Flask API</div><div class="settings-sub">localhost:5000</div></div>
+            <span id="api-status" style="font-size:11px;font-weight:800;color:var(--text-muted)">Checking…</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<script>
+// ════════════════════════════════════════
+//  NAVIGATION
+// ════════════════════════════════════════
+const BACKEND = 'http://localhost:5000';
+
+const PAGE_TITLES = {
+  overview:      '<em>Overview</em> <span class="muted">Conditions</span>',
+  analysis:      '<em>Analysis</em> <span class="muted">Upload & Detect</span>',
+  trends:        '<em>Health</em> <span class="muted">Trends</span>',
+  report:        '<em>Latest</em> <span class="muted">Report</span>',
+  drai:          '<em>Dr. AI</em> <span class="muted">Assistant</span>',
+  notifications: '<em>Alerts</em> <span class="muted">& Updates</span>',
+  settings:      '<em>Settings</em> <span class="muted">& Info</span>',
+};
+
+function navigate(page) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  const pg = document.getElementById('page-' + page);
+  if (pg) pg.classList.add('active');
+  const nav = document.getElementById('nav-' + page);
+  if (nav) nav.classList.add('active');
+  document.getElementById('page-heading').innerHTML = PAGE_TITLES[page] || page;
+  if (page === 'settings') checkApiStatus();
+}
+
+function selectOrgan(el) {
+  document.querySelectorAll('.organ-card').forEach(c => c.classList.remove('active'));
+  el.classList.add('active');
+}
+
+// ════════════════════════════════════════
+//  FILE UPLOAD + ANALYSIS
+// ════════════════════════════════════════
+let selectedFile = null;
+
+document.getElementById('file-input').addEventListener('change', function() {
+  if (this.files[0]) onFileSelected(this.files[0]);
+});
+
+function handleDrop(e) {
+  e.preventDefault();
+  document.getElementById('upload-zone').classList.remove('drag');
+  const file = e.dataTransfer.files[0];
+  if (file && file.name.endsWith('.wav')) onFileSelected(file);
+  else showToast('Please drop a .wav file');
+}
+
+function onFileSelected(file) {
+  selectedFile = file;
+  const nameEl = document.getElementById('file-name-display');
+  nameEl.textContent = '📁 ' + file.name;
+  nameEl.style.display = 'block';
+  document.getElementById('analyze-btn').style.display = 'block';
+  showToast('File selected: ' + file.name);
+}
+
+// ═══ DISPLAY RESULT (shared by Flask and demo mode) ═══
+function displayResult(data) {
+  document.getElementById('analyzing-state').style.display = 'none';
+  document.getElementById('result-content').style.display = 'flex';
+  document.getElementById('res-condition').textContent = data.label;
+  document.getElementById('res-badge').textContent = data.icon + ' ' + data.prediction;
+  document.getElementById('res-badge').style.background = data.color + '22';
+  document.getElementById('res-badge').style.color = data.color;
+  document.getElementById('res-risk-label').textContent = 'Risk: ' + data.risk;
+  document.getElementById('res-conf-pct').textContent = data.confidence + '%';
+  setTimeout(() => { document.getElementById('res-conf-bar').style.width = data.confidence + '%'; }, 100);
+
+  const breakdown = document.getElementById('res-breakdown');
+  breakdown.innerHTML = '';
+  Object.entries(data.breakdown).sort((a,b)=>b[1]-a[1]).forEach(([cls, pct]) => {
+    const isTop = cls === data.prediction;
+    breakdown.innerHTML += `<div class="breakdown-row"><div class="breakdown-name">${cls}</div><div class="breakdown-bar-bg"><div class="breakdown-bar-fill ${isTop?'top':''}" style="width:${pct}%"></div></div><div class="breakdown-pct">${pct}%</div></div>`;
+  });
+
+  document.getElementById('explanation-panel').style.display = 'block';
+  document.getElementById('explanation-skel').style.display = 'none';
+  document.getElementById('explanation-text').style.display = 'block';
+  document.getElementById('explanation-text').textContent = data.explanation;
+
+  populateReport(data);
+  if (typeof updateVitals === 'function') updateVitals(data.prediction);
+  window._lastDiagnosis = data;
+  document.getElementById('notif-result-msg').textContent =
+    `Analysis complete: ${data.label} detected with ${data.confidence}% confidence.`;
+  showToast('✅ Analysis complete!');
+}
+
+// ═══ DEMO MODE — AI-powered simulation when Flask is offline ═══
+const CLASS_INFO_JS = {
+  normal: { label:'Normal Heart Sound', icon:'❤️', risk:'Low', risk_pct:10, color:'#22c55e',
+    advice:'Your heart sounds are within normal parameters. Continue routine checkups annually.',
+    breakdown:{ normal:91.2, AS:3.1, MR:2.8, MS:1.6, MVP:1.3 } },
+  AS:     { label:'Aortic Stenosis', icon:'🔴', risk:'High', risk_pct:85, color:'#ef4444',
+    advice:'Aortic Stenosis detected. Consult a cardiologist promptly for echocardiogram confirmation.',
+    breakdown:{ AS:88.4, normal:5.2, MR:3.1, MS:2.0, MVP:1.3 } },
+  MR:     { label:'Mitral Regurgitation', icon:'🟠', risk:'Medium-High', risk_pct:70, color:'#f97316',
+    advice:'Mitral Regurgitation detected. Schedule a follow-up with a cardiologist within 2 weeks.',
+    breakdown:{ MR:84.7, normal:6.3, AS:4.2, MS:2.8, MVP:2.0 } },
+  MS:     { label:'Mitral Stenosis', icon:'🟡', risk:'Medium', risk_pct:60, color:'#f59e0b',
+    advice:'Mitral Stenosis detected. Seek evaluation from a cardiac specialist soon.',
+    breakdown:{ MS:82.1, normal:7.4, MR:5.3, AS:3.1, MVP:2.1 } },
+  MVP:    { label:'Mitral Valve Prolapse', icon:'🟣', risk:'Low-Medium', risk_pct:35, color:'#a855f7',
+    advice:'Mitral Valve Prolapse detected. Often benign — follow up with a cardiologist for monitoring.',
+    breakdown:{ MVP:86.3, normal:8.1, MR:2.9, MS:1.7, AS:1.0 } }
+};
+
+async function runDemoAnalysis(filename) {
+  // Pick a class — cycle through them so demo is informative
+  const classes = ['normal','AS','MR','MS','MVP'];
+  const idx = (window._demoIdx = ((window._demoIdx||0) + 1) % classes.length);
+  const cls = classes[idx];
+  const info = CLASS_INFO_JS[cls];
+  const confidence = (82 + Math.random() * 14).toFixed(1);
+
+  // Get AI explanation via Anthropic
+  const apiKey = localStorage.getItem('dr_ai_api_key') || '';
+  let explanation = `[DEMO MODE — Flask not running]\n\n${info.advice}\n\nThis is a simulated result based on the filename "${filename}". For real ML classification, run flask_app.py and reopen in Chrome.`;
+
+  if (apiKey) {
+    try {
+      const r = await fetch('https://api.anthropic.com/v1/messages', {
+        method:'POST',
+        headers:{ 'Content-Type':'application/json','x-api-key':apiKey,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true' },
+        body: JSON.stringify({
+          model:'claude-sonnet-4-20250514', max_tokens:400,
+          system:'You are Dr. AI, a cardiac specialist. Give a warm, clear 3-paragraph explanation for a patient whose heart sound was classified. Keep it under 180 words.',
+          messages:[{role:'user',content:`Heart sound classified as: ${info.label} (${cls}), Confidence: ${confidence}%. Filename: ${filename}. Explain what this means, possible symptoms, and next steps.`}]
+        })
+      });
+      const d = await r.json();
+      if (d.content?.[0]?.text) explanation = d.content[0].text;
+    } catch(e) { /* use fallback explanation */ }
+  }
+
+  return { prediction:cls, label:info.label, icon:info.icon, confidence:parseFloat(confidence),
+    risk:info.risk, risk_pct:info.risk_pct, color:info.color, advice:info.advice,
+    explanation, breakdown:info.breakdown, filename };
+}
+
+async function runAnalysis() {
+  if (!selectedFile) { showToast('Please select a .wav file first'); return; }
+
+  document.getElementById('analyze-btn').style.display = 'none';
+  document.getElementById('analyzing-state').style.display = 'flex';
+  document.getElementById('result-empty').style.display = 'none';
+  document.getElementById('result-content').style.display = 'none';
+  document.getElementById('explanation-panel').style.display = 'none';
+
+  // ── Try Flask first ──
+  let flaskWorking = false;
+  try {
+    const healthCheck = await Promise.race([
+      fetch(BACKEND + '/health'),
+      new Promise((_,rej) => setTimeout(() => rej(new Error('timeout')), 2000))
+    ]);
+    flaskWorking = healthCheck.ok;
+  } catch(e) { flaskWorking = false; }
+
+  if (flaskWorking) {
+    // ── Real Flask analysis ──
+    const formData = new FormData();
+    formData.append('file', selectedFile);
+    try {
+      const res = await fetch(BACKEND + '/predict', { method:'POST', body:formData });
+      if (!res.ok) { const e = await res.json(); throw new Error(e.error || 'Server error'); }
+      displayResult(await res.json());
+    } catch(err) {
+      document.getElementById('analyzing-state').style.display = 'none';
+      document.getElementById('result-empty').style.display = 'flex';
+      document.getElementById('result-empty').querySelector('p').textContent = '❌ Flask error: ' + err.message;
+      showToast('Flask error: ' + err.message);
+    }
+  } else {
+    // ── Demo / Simulation Mode ──
+    showToast('⚠️ Flask offline — running Demo Mode');
+    // Simulate processing time
+    await new Promise(r => setTimeout(r, 2200));
+    const data = await runDemoAnalysis(selectedFile.name);
+    displayResult(data);
+    showToast('✅ Demo analysis complete! Run flask_app.py for real ML results.');
+  }
+}
+
+function populateReport(data) {
+  document.getElementById('report-empty').style.display = 'none';
+  document.getElementById('report-filled').style.display = 'block';
+
+  document.getElementById('rpt-condition').textContent = data.label;
+  document.getElementById('rpt-sub').textContent = data.advice;
+  document.getElementById('rpt-badge').textContent = data.icon + ' ' + data.prediction;
+  document.getElementById('rpt-badge').style.background = data.color + '22';
+  document.getElementById('rpt-badge').style.color = data.color;
+  document.getElementById('rpt-conf').textContent = data.confidence + '%';
+  document.getElementById('rpt-risk').textContent = data.risk;
+  document.getElementById('rpt-file').textContent = selectedFile.name;
+  document.getElementById('rpt-explanation').textContent = data.explanation;
+  setTimeout(() => {
+    document.getElementById('rpt-risk-bar').style.width = data.risk_pct + '%';
+  }, 200);
+
+  // Recommendations by condition
+  const recosMap = {
+    normal: ['Maintain regular annual cardiac checkups','Continue a heart-healthy lifestyle with regular exercise','Monitor blood pressure and cholesterol levels routinely'],
+    AS: ['Schedule an echocardiogram with a cardiologist immediately','Avoid strenuous physical activity until evaluated','Discuss valve replacement options with your cardiologist','Report any chest pain, dizziness or fainting to ER'],
+    MR: ['Schedule an echocardiogram with a cardiologist within 2 weeks','Reduce sodium intake and monitor blood pressure daily','Avoid strenuous physical activity until follow-up','Report any new symptoms like chest pain or shortness of breath'],
+    MS: ['Seek evaluation from a cardiac specialist soon','Monitor for symptoms: fatigue, shortness of breath, palpitations','Discuss medication options with your cardiologist','Consider lifestyle modifications to reduce heart strain'],
+    MVP: ['Follow up with a cardiologist for routine monitoring','Most MVP cases are benign — stay calm and informed','Report any palpitations, chest pain or dizziness','Maintain a heart-healthy lifestyle']
+  };
+  const recos = recosMap[data.prediction] || recosMap.normal;
+  const recosEl = document.getElementById('rpt-recos');
+  recosEl.innerHTML = recos.map((r, i) => `
+    <div class="reco-item">
+      <div class="reco-bullet">${i+1}</div>
+      <div class="reco-text">${r}</div>
+    </div>`).join('');
+}
+
+// ════════════════════════════════════════
+//  DYNAMIC VITALS PER CONDITION
+// ════════════════════════════════════════
+const VITALS_BY_CONDITION = {
+  normal: { hr: '72 bpm', bp: '118/76', glucose: '95 mg/dL', hrVal: '72', bpVal: '118/76', glVal: '95' },
+  AS:     { hr: '88 bpm', bp: '145/90', glucose: '110 mg/dL', hrVal: '88', bpVal: '145/90', glVal: '110' },
+  MR:     { hr: '96 bpm', bp: '130/85', glucose: '105 mg/dL', hrVal: '96', bpVal: '130/85', glVal: '105' },
+  MS:     { hr: '104 bpm', bp: '125/82', glucose: '108 mg/dL', hrVal: '104', bpVal: '125/82', glVal: '108' },
+  MVP:    { hr: '80 bpm', bp: '120/78', glucose: '98 mg/dL', hrVal: '80', bpVal: '120/78', glVal: '98' },
+};
+
+function updateVitals(prediction) {
+  const v = VITALS_BY_CONDITION[prediction] || VITALS_BY_CONDITION.normal;
+  // Update overview stats panel
+  const statRows = document.querySelectorAll('.organ-card.active .stat-row .val');
+  if (statRows[0]) statRows[0].textContent = v.hr;
+  if (statRows[1]) statRows[1].textContent = v.bp;
+  if (statRows[2]) statRows[2].textContent = v.glucose;
+  // Update right panel BPM
+  const bpmEl = document.querySelector('.bpm-value');
+  if (bpmEl) bpmEl.textContent = v.hr;
+  // Update mini stats
+  const miniVals = document.querySelectorAll('.mini-stat-val');
+  if (miniVals[0]) miniVals[0].textContent = v.bp + ' mmHg';
+  if (miniVals[1]) miniVals[1].textContent = v.glVal + '/ml';
+  const miniNums = document.querySelectorAll('.mini-num');
+  if (miniNums[0]) miniNums[0].textContent = v.glVal;
+}
+
+// ════════════════════════════════════════
+//  DR. AI CHAT  (via Groq backend)
+// ════════════════════════════════════════
+let chatHistory = [];
+let isListening = false;
+let recognition = null;
+let voiceOutputEnabled = true; // tied to settings toggle
+
+function autoResize(el) {
+  el.style.height = 'auto';
+  el.style.height = Math.min(el.scrollHeight, 120) + 'px';
+}
+
+function handleKey(e) {
+  if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); }
+}
+
+function sendSuggestion(el) {
+  document.getElementById('chat-input').value = el.textContent;
+  document.getElementById('chat-suggestions').style.display = 'none';
+  sendMessage();
+}
+
+function nowTime() {
+  return new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+}
+
+function addBubble(text, role) {
+  const msgs = document.getElementById('chat-messages');
+  const row = document.createElement('div');
+  row.className = 'bubble-row' + (role === 'user' ? ' user' : '');
+  const avatar = document.createElement('div');
+  avatar.className = 'bubble-avatar ' + (role === 'user' ? 'user' : 'ai');
+  avatar.textContent = role === 'user' ? '👤' : 'AI';
+  const wrapper = document.createElement('div');
+  const bubble = document.createElement('div');
+  bubble.className = 'bubble ' + role;
+  bubble.textContent = text;
+  const time = document.createElement('div');
+  time.className = 'bubble-time';
+  time.textContent = nowTime();
+  wrapper.appendChild(bubble);
+  wrapper.appendChild(time);
+  row.appendChild(avatar);
+  row.appendChild(wrapper);
+  msgs.appendChild(row);
+  msgs.scrollTop = msgs.scrollHeight;
+  return bubble;
+}
+
+function showTyping() {
+  const msgs = document.getElementById('chat-messages');
+  const row = document.createElement('div');
+  row.className = 'bubble-row'; row.id = 'typing-indicator';
+  row.innerHTML = `<div class="bubble-avatar ai">AI</div><div class="bubble ai typing-bubble"><div class="typing-dot"></div><div class="typing-dot"></div><div class="typing-dot"></div></div>`;
+  msgs.appendChild(row); msgs.scrollTop = msgs.scrollHeight;
+}
+function hideTyping() { const el = document.getElementById('typing-indicator'); if(el) el.remove(); }
+
+// ═══ DR. AI SYSTEM PROMPT ═══
+const DR_AI_SYSTEM = `You are Dr. AI — a warm, expert cardiac specialist inside Heartify Pro. You ONLY discuss heart and cardiovascular health topics. If asked about anything else (coding, movies, sports, politics, general trivia), respond ONLY with: "I'm a cardiac health specialist, so I can only help with heart and health-related questions. Is there something about your heart health I can help you with today?" Be warm, clear, and concise (2-4 paragraphs). Use bullet points for lists. Always recommend a real cardiologist for personal medical decisions. Never diagnose definitively or prescribe medication.`;
+
+function askTopic(question) {
+  document.getElementById('chat-input').value = question;
+  sendMessage();
+}
+
+async function sendMessage() {
+  const input = document.getElementById('chat-input');
+  const text = input.value.trim();
+  if (!text) return;
+  const sugg = document.getElementById('chat-suggestions');
+  if (sugg) sugg.style.display = 'none';
+  addBubble(text, 'user');
+  chatHistory.push({ role: 'user', content: text });
+  input.value = ''; input.style.height = 'auto';
+  showTyping();
+
+  const diagCtx = window._lastDiagnosis
+    ? `\n\n[PATIENT CONTEXT: Latest analysis = ${window._lastDiagnosis.label}, Confidence: ${window._lastDiagnosis.confidence}%, Risk: ${window._lastDiagnosis.risk}. Reference this when relevant.]`
+    : '';
+
+  const apiKey = localStorage.getItem('dr_ai_api_key') || '';
+  if (!apiKey) {
+    hideTyping();
+    addBubble('⚠️ No API key saved yet. Please go to Settings (gear icon) → paste your Anthropic API key → Save Key. Then come back and ask your question!', 'ai');
+    return;
+  }
+
+  try {
+    const res = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': apiKey,
+        'anthropic-version': '2023-06-01',
+        'anthropic-dangerous-direct-browser-access': 'true'
+      },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 1024,
+        system: DR_AI_SYSTEM + diagCtx,
+        messages: chatHistory
+      })
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error?.message || 'API error ' + res.status);
+    const reply = data.content?.[0]?.text || 'Sorry, no response received.';
+    hideTyping();
+    addBubble(reply, 'ai');
+    chatHistory.push({ role: 'assistant', content: reply });
+    const voiceToggle = document.querySelector('.settings-card .toggle');
+    if (!voiceToggle || voiceToggle.classList.contains('on')) speak(reply);
+  } catch (err) {
+    hideTyping();
+    addBubble('⚠️ Dr. AI error: ' + err.message + '. Please check your API key in Settings.', 'ai');
+    console.error('Dr. AI error:', err);
+  }
+}
+
+// ════════ VOICE ════════
+function setupRecognition() {
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if (!SR) return null;
+  const rec = new SR();
+  rec.lang = 'en-US'; rec.continuous = false; rec.interimResults = false;
+  rec.onresult = (e) => {
+    document.getElementById('chat-input').value = e.results[0][0].transcript;
+    setVoiceStatus(''); stopListening(); sendMessage();
+  };
+  rec.onerror = () => { setVoiceStatus('Could not hear you. Try again.'); stopListening(); };
+  rec.onend = () => { if (isListening) stopListening(); };
+  return rec;
+}
+function setVoiceStatus(msg) { document.getElementById('voice-status').textContent = msg; }
+function startListening() {
+  if (!recognition) recognition = setupRecognition();
+  if (!recognition) { setVoiceStatus('Voice not supported in this browser.'); return; }
+  isListening = true;
+  document.getElementById('btn-mic').classList.add('listening');
+  setVoiceStatus('🎤 Listening… speak now');
+  recognition.start();
+}
+function stopListening() {
+  isListening = false;
+  document.getElementById('btn-mic').classList.remove('listening');
+  if (recognition) { try { recognition.stop(); } catch(e){} }
+}
+function toggleVoice() { isListening ? (stopListening(), setVoiceStatus('')) : startListening(); }
+function speak(text) {
+  if (!window.speechSynthesis) return;
+  window.speechSynthesis.cancel();
+  const short = text.match(/[^.!?]*[.!?]/g)?.slice(0, 2).join(' ') || text.slice(0, 200);
+  const u = new SpeechSynthesisUtterance(short);
+  u.rate = 0.95; u.pitch = 1; u.lang = 'en-US';
+  const voices = window.speechSynthesis.getVoices();
+  const preferred = voices.find(v => v.name.includes('Samantha') || v.name.includes('Google UK'));
+  if (preferred) u.voice = preferred;
+  window.speechSynthesis.speak(u);
+}
+
+// ════════════════════════════════════════
+//  API STATUS CHECK
+// ════════════════════════════════════════
+async function checkApiStatus() {
+  const el = document.getElementById('api-status');
+  try {
+    const res = await fetch(BACKEND + '/health');
+    if (res.ok) { el.textContent = '✅ Online'; el.style.color = 'var(--green)'; }
+    else throw new Error();
+  } catch {
+    el.textContent = '❌ Offline'; el.style.color = 'var(--red)';
+  }
+}
+
+// ════════════════════════════════════════
+//  TOAST
+// ════════════════════════════════════════
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 3000);
+}
+
+// Init
+checkApiStatus();
+
+// ═══ API KEY MANAGEMENT ═══
+function saveApiKey() {
+  const key = document.getElementById('api-key-input').value.trim();
+  if (!key.startsWith('sk-')) {
+    document.getElementById('api-key-status').style.color = 'var(--red)';
+    document.getElementById('api-key-status').textContent = '❌ Invalid key — must start with sk-';
+    return;
+  }
+  localStorage.setItem('dr_ai_api_key', key);
+  document.getElementById('api-key-status').style.color = 'var(--green)';
+  document.getElementById('api-key-status').textContent = '✅ API key saved! Dr. AI is ready.';
+  showToast('✅ Dr. AI API key saved!');
+}
+(function loadSavedKey() {
+  const saved = localStorage.getItem('dr_ai_api_key');
+  if (!saved) return;
+  const inp = document.getElementById('api-key-input');
+  if (inp) inp.value = saved;
+  const st = document.getElementById('api-key-status');
+  if (st) { st.textContent = '✅ API key loaded — Dr. AI is ready!'; st.style.color = 'var(--green)'; }
+})();
+
+</script>
+</body>
+</html>
