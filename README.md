@@ -1,4 +1,4 @@
-# 🫀 Heartify Pro — Clinical Heart Sound Analysis
+# 🫀 Heartify Pro - Clinical Heart Sound Analysis
 
 ![Python](https://img.shields.io/badge/Python-3.x-blue?style=flat-square&logo=python)
 ![Flask](https://img.shields.io/badge/Flask-REST%20API-lightgrey?style=flat-square&logo=flask)
