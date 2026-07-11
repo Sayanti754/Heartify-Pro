@@ -253,4 +253,4 @@ soundfile
 
 ## 👨‍💻 Author
 
-Built  by **Sayanti Swarupa** — Heartify Pro v1.0 — 2026
+Built  by **Sayanti Swarupa** — Heartify Pro v1.0 - 2026
